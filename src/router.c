@@ -49,14 +49,14 @@ int router_bind(router_t *r)
     int opt = 1;
     setsockopt(r->udp_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)); 
 
-    // 如果使用 IPv6 socket，设置 IPV6_V6ONLY=0 以支持双栈，并绑定到回环地址和指定端口
+    // 如果使用 IPv6 socket，设置 IPV6_V6ONLY=0 以支持双栈，绑定到 :: 接收所有本地 IPv4/IPv6 流量
     if (af == AF_INET6) {
         setsockopt(r->udp_fd, IPPROTO_IPV6, IPV6_V6ONLY, &(int){0}, sizeof(int));
 
         struct sockaddr_in6 addr;
         memset(&addr, 0, sizeof(addr));
         addr.sin6_family = AF_INET6;
-        addr.sin6_addr = in6addr_loopback;
+        addr.sin6_addr = in6addr_any;
         addr.sin6_port = htons(r->udp_port);
 
         if (bind(r->udp_fd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
