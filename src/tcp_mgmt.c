@@ -10,7 +10,7 @@
 // 与主线程共享的全局指针
 static route_table_t   *g_mgmt_rt;
 static neighbor_table_t *g_mgmt_nt;
-static int              g_mgmt_fd = -1;
+static int              g_mgmt_tcp_fd = -1;
 static int              g_mgmt_udp_fd = -1;
 static volatile int     g_mgmt_running = 0;
 static pthread_t        g_mgmt_thread;
@@ -182,7 +182,7 @@ static void *mgmt_server_thread(void *arg)
     while (g_mgmt_running) {
         struct sockaddr_storage client_addr;
         socklen_t addr_len = sizeof(client_addr);
-        int client_fd = accept(g_mgmt_fd,
+        int client_fd = accept(g_mgmt_tcp_fd,
                                (struct sockaddr *)&client_addr, &addr_len);
         if (client_fd < 0) {
             if (!g_mgmt_running) break;
@@ -211,22 +211,27 @@ static void *mgmt_server_thread(void *arg)
     return NULL;
 }
 
+// 启动 TCP 管理监听线程
+// 在独立线程中运行，rt 和 nt 与主线程共享（通过 rt->lock 保护）
+// 返回 0 成功，-1 失败
 int tcp_mgmt_start(int port, route_table_t *rt, neighbor_table_t *nt, int udp_fd)
 {
+    // 拿到主线程传来的路由表和邻居表指针，以及 UDP socket fd，保存在全局变量中供管理线程使用
     g_mgmt_rt = rt;
     g_mgmt_nt = nt;
     g_mgmt_udp_fd = udp_fd;
 
-    g_mgmt_fd = socket(AF_INET6, SOCK_STREAM, 0);
-    if (g_mgmt_fd < 0) {
-        g_mgmt_fd = socket(AF_INET, SOCK_STREAM, 0);
-        if (g_mgmt_fd < 0) {
+    // 创建 TCP 监听 socket，优先尝试 IPv6 双栈，如果失败再尝试 IPv4
+    g_mgmt_tcp_fd = socket(AF_INET6, SOCK_STREAM, 0);
+    if (g_mgmt_tcp_fd < 0) {
+        g_mgmt_tcp_fd = socket(AF_INET, SOCK_STREAM, 0);
+        if (g_mgmt_tcp_fd < 0) {
             log_printf("ERROR: mgmt socket failed: %s", strerror(errno));
             return -1;
         }
 
         int opt = 1;
-        setsockopt(g_mgmt_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+        setsockopt(g_mgmt_tcp_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
         struct sockaddr_in addr;
         memset(&addr, 0, sizeof(addr));
@@ -234,16 +239,16 @@ int tcp_mgmt_start(int port, route_table_t *rt, neighbor_table_t *nt, int udp_fd
         addr.sin_addr.s_addr = htonl(INADDR_ANY);
         addr.sin_port = htons(port);
 
-        if (bind(g_mgmt_fd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+        if (bind(g_mgmt_tcp_fd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
             log_printf("ERROR: mgmt bind failed: %s", strerror(errno));
-            close(g_mgmt_fd);
-            g_mgmt_fd = -1;
+            close(g_mgmt_tcp_fd);
+            g_mgmt_tcp_fd = -1;
             return -1;
         }
-    } else {
+    } else { // 成功创建 IPv6 socket，设置为双栈并绑定
         int opt = 1;
-        setsockopt(g_mgmt_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-        setsockopt(g_mgmt_fd, IPPROTO_IPV6, IPV6_V6ONLY, &(int){0}, sizeof(int));
+        setsockopt(g_mgmt_tcp_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+        setsockopt(g_mgmt_tcp_fd, IPPROTO_IPV6, IPV6_V6ONLY, &(int){0}, sizeof(int));
 
         struct sockaddr_in6 addr;
         memset(&addr, 0, sizeof(addr));
@@ -251,26 +256,26 @@ int tcp_mgmt_start(int port, route_table_t *rt, neighbor_table_t *nt, int udp_fd
         addr.sin6_addr = in6addr_any;
         addr.sin6_port = htons(port);
 
-        if (bind(g_mgmt_fd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+        if (bind(g_mgmt_tcp_fd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
             log_printf("ERROR: mgmt bind failed: %s", strerror(errno));
-            close(g_mgmt_fd);
-            g_mgmt_fd = -1;
+            close(g_mgmt_tcp_fd);
+            g_mgmt_tcp_fd = -1;
             return -1;
         }
     }
 
-    if (listen(g_mgmt_fd, 8) < 0) {
+    if (listen(g_mgmt_tcp_fd, 8) < 0) {
         log_printf("ERROR: mgmt listen failed: %s", strerror(errno));
-        close(g_mgmt_fd);
-        g_mgmt_fd = -1;
+        close(g_mgmt_tcp_fd);
+        g_mgmt_tcp_fd = -1;
         return -1;
     }
 
     g_mgmt_running = 1;
     if (pthread_create(&g_mgmt_thread, NULL, mgmt_server_thread, NULL) != 0) {
         log_printf("ERROR: failed to create mgmt server thread");
-        close(g_mgmt_fd);
-        g_mgmt_fd = -1;
+        close(g_mgmt_tcp_fd);
+        g_mgmt_tcp_fd = -1;
         g_mgmt_running = 0;
         return -1;
     }
@@ -283,10 +288,10 @@ void tcp_mgmt_stop(void)
 {
     g_mgmt_running = 0;
 
-    if (g_mgmt_fd >= 0) {
-        shutdown(g_mgmt_fd, SHUT_RDWR);
-        close(g_mgmt_fd);
-        g_mgmt_fd = -1;
+    if (g_mgmt_tcp_fd >= 0) {
+        shutdown(g_mgmt_tcp_fd, SHUT_RDWR);
+        close(g_mgmt_tcp_fd);
+        g_mgmt_tcp_fd = -1;
     }
 
     pthread_join(g_mgmt_thread, NULL);

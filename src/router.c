@@ -66,7 +66,7 @@ int router_bind(router_t *r)
             r->udp_fd = -1;
             return -1;
         }
-    } else {
+    } else { // 否则 使用 IPv4 socket
         struct sockaddr_in addr;
         memset(&addr, 0, sizeof(addr));
         addr.sin_family = AF_INET;

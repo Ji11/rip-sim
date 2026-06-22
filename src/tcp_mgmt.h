@@ -11,7 +11,7 @@
 // 返回 0 成功，-1 失败
 int tcp_mgmt_start(int port, route_table_t *rt, neighbor_table_t *nt, int udp_fd);
 
-// 优雅关闭管理服务
+// 关闭管理服务
 void tcp_mgmt_stop(void);
 
 #endif // TCP_MGMT_H
