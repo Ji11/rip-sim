@@ -1,0 +1,15 @@
+# Build artifacts
+obj/
+ripd
+
+# Editor / IDE
+.clangd
+.vscode/
+.idea/
+
+# Claude Code
+CLAUDE.md
+
+# OS
+Thumbs.db
+.DS_Store
