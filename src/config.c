@@ -71,21 +71,21 @@ int config_load(const char *path, router_t *router)
         // tcp_port <port>
         // neighbor <neighbor_id> <address> <port>
         // network <cidr>
-        char key[64], id[256], nb_addr[256], nb_port[256];
+        char key[64], val[256], nb_addr[256], nb_port[256];
 
-        sscanf(s, "%63s %255s %255s %255s", key, id, nb_addr, nb_port);
+        sscanf(s, "%63s %255s %255s %255s", key, val, nb_addr, nb_port);
 
         if (strcmp(key, "id") == 0) {
-            strncpy(router->id, id, sizeof(router->id) - 1);
+            strncpy(router->id, val, sizeof(router->id) - 1);
             router->id[sizeof(router->id) - 1] = '\0';
             log_printf("config: id=%s", router->id);
 
         } else if (strcmp(key, "udp_port") == 0) {
-            router->udp_port = atoi(id);
+            router->udp_port = atoi(val);
             log_printf("config: udp_port=%d", router->udp_port);
 
         } else if (strcmp(key, "tcp_port") == 0) {
-            router->tcp_port = atoi(id);
+            router->tcp_port = atoi(val);
             log_printf("config: tcp_port=%d", router->tcp_port);
 
         } else if (strcmp(key, "neighbor") == 0) {
@@ -101,7 +101,7 @@ int config_load(const char *path, router_t *router)
             }
 
             // 解析出邻居后添加到邻居表中
-            if (nt_add(&router->nt, id, (const struct sockaddr *)&sa, sa_len) < 0) {
+            if (nt_add(&router->nt, val, (const struct sockaddr *)&sa, sa_len) < 0) {
                 log_printf("ERROR: line %d: failed to add neighbor", line_num);
 
                 fclose(fp);
@@ -112,8 +112,8 @@ int config_load(const char *path, router_t *router)
             // 格式：network <cidr>
             struct sockaddr_storage sa;
             int prefix_len, af;
-            if (parse_cidr(id, &sa, &prefix_len, &af) < 0) { // 解析 CIDR 字符串，得到 sa, prefix_len, af
-                log_printf("ERROR: line %d: invalid network %s", line_num, id);
+            if (parse_cidr(val, &sa, &prefix_len, &af) < 0) { // 解析 CIDR 字符串，得到 sa, prefix_len, af
+                log_printf("ERROR: line %d: invalid network %s", line_num, val);
 
                 fclose(fp);
                 return -1;
@@ -134,7 +134,7 @@ int config_load(const char *path, router_t *router)
             uint8_t zero[16];
             memset(zero, 0, 16);
             rt_upsert(&router->rt, af, dest, prefix_len, zero, 1, -1);
-            log_printf("config: direct network %s", id);
+            log_printf("config: direct network %s", val);
 
         } else {
             log_printf("line %d: unknown key '%s', ignoring", line_num, key);
