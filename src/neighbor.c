@@ -97,6 +97,13 @@ void nt_show(const neighbor_table_t *nt, int fd)
     char addr_buf[64];
     char time_buf[32];
 
+    // 输出示例：
+    // ID       Address                State  Last Recv
+    // --------------------------------------------------------
+    // 2        127.0.0.1:5202         UP     20:54:56
+    // 3        127.0.0.1:5203         UP     20:54:56
+    //
+    // Total: 2 neighbors
     dprintf(fd, "%-8s %-22s %-6s %s\n",
             "ID", "Address", "State", "Last Recv");
     dprintf(fd, "----------------------------------------------"
