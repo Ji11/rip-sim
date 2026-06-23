@@ -18,40 +18,25 @@ static pthread_t        g_mgmt_thread;
 // show route：打印路由表
 static void cmd_show_route(int fd)
 {
-    FILE *fp = tmpfile();
+    // dup fd，避免 fclose 关掉原来的 TCP 连接
+    FILE *fp = fdopen(dup(fd), "w");
     if (!fp) {
-        dprintf(fd, "ERROR: cannot create temp file\n");
+        dprintf(fd, "ERROR: cannot create stream\n");
         return;
     }
     rt_dump(g_mgmt_rt, fp);
-    fflush(fp);
-
-    fseek(fp, 0, SEEK_SET);
-    char buf[4096];
-    size_t n;
-    while ((n = fread(buf, 1, sizeof(buf), fp)) > 0) {
-        if (write(fd, buf, n) < 0 && errno == EPIPE) break;
-    }
     fclose(fp);
 }
 
 // show neighbors：打印邻居表
 static void cmd_show_neighbors(int fd)
 {
-    FILE *fp = tmpfile();
+    FILE *fp = fdopen(dup(fd), "w");
     if (!fp) {
-        dprintf(fd, "ERROR: cannot create temp file\n");
+        dprintf(fd, "ERROR: cannot create stream\n");
         return;
     }
     nt_dump(g_mgmt_nt, fp);
-    fflush(fp);
-
-    fseek(fp, 0, SEEK_SET);
-    char buf[4096];
-    size_t n;
-    while ((n = fread(buf, 1, sizeof(buf), fp)) > 0) {
-        if (write(fd, buf, n) < 0 && errno == EPIPE) break;
-    }
     fclose(fp);
 }
 
