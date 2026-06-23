@@ -40,9 +40,6 @@ int  rt_upsert(route_table_t *rt, int af, const uint8_t *dest,
                int prefix_len, const uint8_t *next_hop, int metric,
                int from_neighbor);
 
-// 删除指定索引的路由条目
-void rt_delete_at(route_table_t *rt, int idx);
-
 // 按目标 + 前缀查找路由，返回索引或 -1
 int  rt_find(const route_table_t *rt, int af, const uint8_t *dest,
              int prefix_len);

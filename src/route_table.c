@@ -115,21 +115,6 @@ int rt_upsert(route_table_t *rt, int af, const uint8_t *dest,
     return 0;
 }
 
-void rt_delete_at(route_table_t *rt, int idx)
-{
-    if (idx < 0 || idx >= rt->count) return;
-
-    pthread_mutex_lock(&rt->lock);
-    // 将后面的条目前移填补空位
-    if (idx < rt->count - 1) {
-        memmove(&rt->entries[idx], &rt->entries[idx + 1],
-                (rt->count - idx - 1) * sizeof(route_entry_t));
-    }
-    rt->count--;
-    rt->changed = 1;
-    pthread_mutex_unlock(&rt->lock);
-}
-
 int rt_poison_from_neighbor(route_table_t *rt, int nbr_idx)
 {
     int poisoned = 0;

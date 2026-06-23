@@ -114,7 +114,6 @@ int parse_cidr(const char *cidr, struct sockaddr_storage *sa, int *prefix_len, i
 void addr_copy(int af, const uint8_t *src, uint8_t *dst)
 {
     int len = (af == AF_INET) ? 4 : 16;
-    memset(dst, 0, 16); // 把 dst 后 12 位清零
     memcpy(dst, src, len);
 }
 
