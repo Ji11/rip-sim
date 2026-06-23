@@ -176,6 +176,14 @@ int rt_garbage_collect(route_table_t *rt)
 }
 
 // 显示路由表
+// 输出示例：
+// Destination              PfxLen Next Hop                 Metric From
+// ----------------------------------------------------------------------------
+// 10.0.1.0                 24     0.0.0.0                  1       direct
+// 10.0.3.0                 24     127.0.0.1                2       neighbor
+// 10.0.2.0                 24     127.0.0.1                16      neighbor [GC]
+//
+// Total: 3 routes
 void rt_show(route_table_t *rt, int fd)
 {
     char dest_buf[INET6_ADDRSTRLEN];
@@ -196,14 +204,6 @@ void rt_show(route_table_t *rt, int fd)
 
         const char *from_str = (e->from_neighbor >= 0) ? "neighbor" : "direct";
 
-        // 输出示例：
-        // Destination              PfxLen Next Hop                 Metric From
-        // ----------------------------------------------------------------------------
-        // 10.0.1.0                 24     0.0.0.0                  1       direct
-        // 10.0.3.0                 24     127.0.0.1                2       neighbor
-        // 10.0.2.0                 24     127.0.0.1                16      neighbor [GC]
-        //
-        // Total: 3 routes
         dprintf(fd, "%-24s %-6d %-24s %-7d %s%s\n",
                 dest_str ? dest_str : "?",
                 e->prefix_len,

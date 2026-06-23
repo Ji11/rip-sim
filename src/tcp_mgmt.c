@@ -82,7 +82,7 @@ static void *mgmt_client_handler(void *arg)
             "link down <id> | link up <id> | quit\n\n> ");
 
     // 以 FILE * 流的方式读取客户端输入，方便使用 fgets
-    FILE *stream = fdopen(client_fd, "r+");
+    FILE *stream = fdopen(client_fd, "r");
     if (!stream) {
         close(client_fd);
         return NULL;
@@ -132,7 +132,6 @@ static void *mgmt_client_handler(void *arg)
         }
 
         dprintf(client_fd, "\n> ");
-        fflush(stream);
     }
 
     fclose(stream);
