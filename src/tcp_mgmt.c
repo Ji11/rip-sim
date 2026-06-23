@@ -132,6 +132,7 @@ static void *mgmt_client_handler(void *arg)
     char line[512];
     while (g_mgmt_running && fgets(line, sizeof(line), stream)) {
         size_t len = strlen(line);
+        // 去掉行尾的换行符
         while (len > 0 && (line[len-1] == '\n' || line[len-1] == '\r')) {
             line[--len] = '\0';
         }

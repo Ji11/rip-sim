@@ -175,6 +175,7 @@ int rt_garbage_collect(route_table_t *rt)
     return removed;
 }
 
+// 显示路由表
 void rt_dump(route_table_t *rt, FILE *fp)
 {
     char dest_buf[INET6_ADDRSTRLEN];
@@ -190,11 +191,20 @@ void rt_dump(route_table_t *rt, FILE *fp)
     for (int i = 0; i < rt->count; i++) {
         route_entry_t *e = &rt->entries[i];
 
+        // 将 dst 和 next_hop 的二进制地址转换为字符串，存储在 dest_buf 和 nh_buf 中
         const char *dest_str = addr_str(e->af, e->dest, dest_buf, sizeof(dest_buf));
         const char *nh_str   = addr_str(e->af, e->next_hop, nh_buf, sizeof(nh_buf));
 
         const char *from_str = (e->from_neighbor >= 0) ? "neighbor" : "direct";
 
+        // 输出示例：
+        // Destination              PfxLen Next Hop                 Metric From
+        // ----------------------------------------------------------------------------
+        // 10.0.1.0                 24     0.0.0.0                  1       direct
+        // 10.0.3.0                 24     127.0.0.1                2       neighbor
+        // 10.0.2.0                 24     127.0.0.1                16      neighbor [GC]
+        //
+        // Total: 3 routes
         fprintf(fp, "%-24s %-6d %-24s %-7d %s%s\n",
                 dest_str ? dest_str : "?",
                 e->prefix_len,

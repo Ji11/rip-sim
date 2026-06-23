@@ -118,6 +118,7 @@ void addr_copy(int af, const uint8_t *src, uint8_t *dst)
     memcpy(dst, src, len);
 }
 
+// 将二进制地址转换为字符串形式，存储在 buf 中，返回 buf
 const char *addr_str(int af, const uint8_t *addr, char *buf, size_t len)
 {
     if (af == AF_INET) {
