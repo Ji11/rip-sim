@@ -19,6 +19,7 @@ void log_printf(const char *fmt, ...)
 
 //  地址工具 
 
+// 将 sockaddr 转换为字符串形式，存储在 buf 中，返回 buf
 const char *sockaddr_str(const struct sockaddr *sa, char *buf, size_t len)
 {
     if (!sa) {
@@ -26,9 +27,10 @@ const char *sockaddr_str(const struct sockaddr *sa, char *buf, size_t len)
         return buf;
     }
 
-    void *addr;
-    uint16_t port;
+    void *addr; // void * 指针，存IP
+    uint16_t port; // 用 uint16 存端口号
 
+    // 根据 IPv4 或 IPv6，将 tcp_mgmt 传来的 sockaddr 类型 sa 转为 sockaddr_in 类型 然后拿到 addr 和 port
     if (sa->sa_family == AF_INET) {
         const struct sockaddr_in *sin = (const struct sockaddr_in *)sa;
         addr = (void *)&sin->sin_addr;

@@ -110,21 +110,25 @@ static void cmd_link_up(int fd, const char *neighbor_id, int udp_fd)
     dprintf(fd, "OK: link UP to neighbor '%s', RIP request sent\n", neighbor_id);
 }
 
-// 客户端处理线程
+// 处理客户端的线程
 static void *mgmt_client_handler(void *arg)
 {
+    // arg 是 accept 返回的 client_fd，从调用的线程创建函数那里反向类型转换成 int
     int client_fd = (int)(intptr_t)arg;
 
+    // 服务器端向客户端 fd 中直接写数据，发给 nc 客户端
     dprintf(client_fd, "RIP Router Management Interface\n");
     dprintf(client_fd, "Commands: show route | show neighbors | "
-            "link down <id> | link up <id> | quit\n\n");
+            "link down <id> | link up <id> | quit\n\n> ");
 
+    // 以 FILE * 流的方式读取客户端输入，方便使用 fgets
     FILE *stream = fdopen(client_fd, "r+");
     if (!stream) {
         close(client_fd);
         return NULL;
     }
 
+    // 循环读取客户端输入的命令行，解析并执行
     char line[512];
     while (g_mgmt_running && fgets(line, sizeof(line), stream)) {
         size_t len = strlen(line);
@@ -179,32 +183,40 @@ static void *mgmt_server_thread(void *arg)
 {
     (void)arg;
 
+    // 循环接受客户端连接，每个连接创建一个独立线程处理
     while (g_mgmt_running) {
         struct sockaddr_storage client_addr;
         socklen_t addr_len = sizeof(client_addr);
+        // accept 阻塞等待连接
         int client_fd = accept(g_mgmt_tcp_fd, (struct sockaddr *)&client_addr, &addr_len);
-        if (client_fd < 0) {
+        if (client_fd < 0) { // 如果 accept 出错 检查一下
             if (!g_mgmt_running) break;
             if (errno == EINTR) continue;
             log_printf("ERROR: accept failed: %s", strerror(errno));
             continue;
         }
 
+        // 打印客户端连接信息
         char peer[64];
-        log_printf("mgmt connection from %s",
-                sockaddr_str((const struct sockaddr *)&client_addr,
-                             peer, sizeof(peer)));
+        log_printf("mgmt connection from %s", sockaddr_str((const struct sockaddr *)&client_addr,
+                                                            peer, sizeof(peer)));
 
+        // 创建线程处理客户端连接，函数参数传递 client_fd
         pthread_t tid;
         pthread_attr_t attr;
         pthread_attr_init(&attr);
+        // 需要设置分离态 PTHREAD_CREATE_DETACHED 
+        // 因为客户端处理线程在完成后会自动退出，不需要主线程 join
+        // 每个客户端连接创建一个线程，处理完 quit 后线程自己 return NULL 结束
+        // 不用分离态 且不 join 的话 线程就会变成僵尸线程
         pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-        if (pthread_create(&tid, &attr, mgmt_client_handler,
-                          (void *)(intptr_t)client_fd) != 0) {
+        // 给线程传一个 client_fd 来指定 client 是哪个，用于和 client 交互
+        // client_fd 的 int 类型转换成 intptr_t 后直接与指针类型对齐了，所以可以直接转换成 void * 
+        if (pthread_create(&tid, &attr, mgmt_client_handler, (void *)(intptr_t)client_fd) != 0) {
             log_printf("ERROR: failed to create client handler thread");
             close(client_fd);
         }
-        pthread_attr_destroy(&attr);
+        pthread_attr_destroy(&attr); // 销毁 attr 属性对象
     }
 
     return NULL;
