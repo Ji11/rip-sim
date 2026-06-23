@@ -44,7 +44,7 @@
 | 任务书要求 | 代码位置 |
 |------------|----------|
 | 周期性发送：每 30 秒向邻居发送路由表 | `src/router.c` → `periodic_update()`, 检查 `now - last_periodic >= 30` |
-| 使用 select 超时实现 30 秒周期（不用 sleep/alarm） | `src/router.c` → `router_run()`, `select(..., tv_sec=1)`, 每秒醒来检查 |
+| 使用 select/poll/epoll 的超时机制实现 30 秒周期发送 | `src/router.c` → `router_run()`, `select(..., tv_sec=1)`, 每秒醒来检查 |
 | 接收并处理邻居路由更新 | `src/rip.c` → `rip_recv()`, 解析 RIP 报文，调用 `rt_upsert()` |
 | Bellman-Ford 更新路由 | `src/route_table.c` → `rt_upsert()`, 实现标准 Bellman-Ford：新度量 = 收到度量 + 1 |
 | 触发更新：路由变化时立即发送，不等定时器 | `src/router.c` → `triggered_update()`, 检测 `rt.changed` 标志，变化时立即发送 |
@@ -94,7 +94,7 @@
 | 技术要求 | 实现位置 | 说明 |
 |----------|----------|------|
 | (1) I/O 复用：使用 select/poll/epoll | `src/router.c` → `router_run()` | 使用 `select()` 同时监听 UDP socket（RIP 数据）和定时器（周期性更新） |
-| (2) 周期性发送用 select 超时，不用 sleep/alarm | `src/router.c` → `router_run()` | `select(..., tv_sec=1)`, 每秒检查 `periodic_update()` |
+| (2) 使用 select/poll/epoll 的超时机制实现 30 秒周期发送 | `src/router.c` → `router_run()` | `select(..., tv_sec=1)` 超时驱动，每秒醒来检查 `periodic_update()`，到 30 秒即触发 |
 | (3) 使用 getaddrinfo 解析地址 | `src/config.c` → `resolve_addr()` | 支持 IP 地址和主机名 |
 | (4) TCP 并发连接处理（线程/I/O 复用/多进程选一） | `src/tcp_mgmt.c` → `mgmt_server_thread()` | 选用 pthread 多线程模型，每个 TCP 连接一个线程 |
 | (5) 信号处理：SIGPIPE, SIGCHLD | `src/main.c` → `setup_signals()` | SIGPIPE → `SIG_IGN`, SIGCHLD → `sigchld_handler()` 回收子进程 |

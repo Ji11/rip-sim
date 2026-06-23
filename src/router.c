@@ -96,7 +96,7 @@ int router_bind(router_t *r)
     return 0;
 }
 
-// 周期性更新（每 30 秒），通过 select 超时实现，不使用 sleep 或 alarm
+// 周期性更新（每 30 秒），使用 select/poll/epoll 的超时机制实现
 static void periodic_update(router_t *r)
 {
     time_t now = time(NULL);

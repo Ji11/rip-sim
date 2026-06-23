@@ -182,8 +182,7 @@ static void *mgmt_server_thread(void *arg)
     while (g_mgmt_running) {
         struct sockaddr_storage client_addr;
         socklen_t addr_len = sizeof(client_addr);
-        int client_fd = accept(g_mgmt_tcp_fd,
-                               (struct sockaddr *)&client_addr, &addr_len);
+        int client_fd = accept(g_mgmt_tcp_fd, (struct sockaddr *)&client_addr, &addr_len);
         if (client_fd < 0) {
             if (!g_mgmt_running) break;
             if (errno == EINTR) continue;
