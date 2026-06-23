@@ -45,7 +45,7 @@ void nt_touch(neighbor_table_t *nt, int idx);
 // 返回超过 180 秒未收到更新的邻居索引数组（调用者负责 free）
 int *nt_check_timeouts(const neighbor_table_t *nt, int *count_out);
 
-//  显示 
-void nt_dump(const neighbor_table_t *nt, FILE *fp);
+// 显示邻居表（直接写入文件描述符）
+void nt_show(const neighbor_table_t *nt, int fd);
 
 #endif // NEIGHBOR_H

@@ -15,31 +15,6 @@ static int              g_mgmt_udp_fd = -1;
 static volatile int     g_mgmt_running = 0;
 static pthread_t        g_mgmt_thread;
 
-// show route：打印路由表
-static void cmd_show_route(int fd)
-{
-    // dup fd，避免 fclose 关掉原来的 TCP 连接
-    FILE *fp = fdopen(dup(fd), "w");
-    if (!fp) {
-        dprintf(fd, "ERROR: cannot create stream\n");
-        return;
-    }
-    rt_dump(g_mgmt_rt, fp);
-    fclose(fp);
-}
-
-// show neighbors：打印邻居表
-static void cmd_show_neighbors(int fd)
-{
-    FILE *fp = fdopen(dup(fd), "w");
-    if (!fp) {
-        dprintf(fd, "ERROR: cannot create stream\n");
-        return;
-    }
-    nt_dump(g_mgmt_nt, fp);
-    fclose(fp);
-}
-
 // link down：手动断开与指定邻居的链路
 static void cmd_link_down(int fd, const char *neighbor_id)
 {
@@ -133,9 +108,9 @@ static void *mgmt_client_handler(void *arg)
             break;
         } else if (strcmp(cmd, "show") == 0) {
             if (strcmp(arg, "route") == 0) {
-                cmd_show_route(client_fd);
+                rt_show(g_mgmt_rt, client_fd);
             } else if (strcmp(arg, "neighbors") == 0) {
-                cmd_show_neighbors(client_fd);
+                nt_show(g_mgmt_nt, client_fd);
             } else {
                 dprintf(client_fd, "ERROR: usage: show <route|neighbors>\n");
             }

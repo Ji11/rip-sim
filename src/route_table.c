@@ -176,22 +176,21 @@ int rt_garbage_collect(route_table_t *rt)
 }
 
 // 显示路由表
-void rt_dump(route_table_t *rt, FILE *fp)
+void rt_show(route_table_t *rt, int fd)
 {
     char dest_buf[INET6_ADDRSTRLEN];
     char nh_buf[INET6_ADDRSTRLEN];
 
     pthread_mutex_lock(&rt->lock);
 
-    fprintf(fp, "%-24s %-6s %-24s %-7s %s\n",
+    dprintf(fd, "%-24s %-6s %-24s %-7s %s\n",
             "Destination", "PfxLen", "Next Hop", "Metric", "From");
-    fprintf(fp, "------------------------------------------------------------"
+    dprintf(fd, "------------------------------------------------------------"
                "--------------\n");
 
     for (int i = 0; i < rt->count; i++) {
         route_entry_t *e = &rt->entries[i];
 
-        // 将 dst 和 next_hop 的二进制地址转换为字符串，存储在 dest_buf 和 nh_buf 中
         const char *dest_str = addr_str(e->af, e->dest, dest_buf, sizeof(dest_buf));
         const char *nh_str   = addr_str(e->af, e->next_hop, nh_buf, sizeof(nh_buf));
 
@@ -205,7 +204,7 @@ void rt_dump(route_table_t *rt, FILE *fp)
         // 10.0.2.0                 24     127.0.0.1                16      neighbor [GC]
         //
         // Total: 3 routes
-        fprintf(fp, "%-24s %-6d %-24s %-7d %s%s\n",
+        dprintf(fd, "%-24s %-6d %-24s %-7d %s%s\n",
                 dest_str ? dest_str : "?",
                 e->prefix_len,
                 nh_str ? nh_str : "?",
@@ -214,6 +213,6 @@ void rt_dump(route_table_t *rt, FILE *fp)
                 (e->metric == RIP_INFINITY) ? " [GC]" : "");
     }
 
-    fprintf(fp, "\nTotal: %d routes\n", rt->count);
+    dprintf(fd, "\nTotal: %d routes\n", rt->count);
     pthread_mutex_unlock(&rt->lock);
 }

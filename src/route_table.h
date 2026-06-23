@@ -53,7 +53,7 @@ int  rt_poison_from_neighbor(route_table_t *rt, int nbr_idx);
 // 垃圾回收：删除 metric==16 且超过 120 秒的条目
 int  rt_garbage_collect(route_table_t *rt);
 
-//  显示
-void rt_dump(route_table_t *rt, FILE *fp);
+// 显示路由表（直接写入文件描述符）
+void rt_show(route_table_t *rt, int fd);
 
 #endif // ROUTE_TABLE_H

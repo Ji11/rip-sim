@@ -36,7 +36,7 @@
 |------------|----------|
 | 数据结构：目标网络、下一跳、度量 | `src/route_table.h` → `route_entry_t` 结构体 |
 | 初始时只知道自己的直连网络和邻居 | `src/config.c` → `config_load()`, 解析 `network` 行，调用 `rt_upsert(..., metric=1, from_neighbor=-1)` 添加直连路由 |
-| 支持通过 TCP 管理接口查看路由表（功能 6） | `src/tcp_mgmt.c` → `cmd_show_route()`, 调用 `rt_dump()` |
+| 支持通过 TCP 管理接口查看路由表（功能 6） | `src/route_table.c` → `rt_show()` |
 | Bellman-Ford 更新算法 | `src/route_table.c` → `rt_upsert()`, 实现四段决策逻辑：直连路由保护 → 同邻居无条件更新 → 同跳数跳过 → 更优路由替换 |
 
 ### 2.2.3 功能 3：RIP 协议实现
@@ -79,8 +79,8 @@
 | 任务书要求 | 代码位置 |
 |------------|----------|
 | TCP 端口监听 | `src/tcp_mgmt.c` → `tcp_mgmt_start()`, 创建 TCP socket, bind, listen |
-| `show route` — 显示路由表 | `src/tcp_mgmt.c` → `cmd_show_route()`, 调用 `rt_dump()` |
-| `show neighbors` — 显示邻居状态 | `src/tcp_mgmt.c` → `cmd_show_neighbors()`, 调用 `nt_dump()` |
+| `show route` — 显示路由表 | `src/route_table.c` → `rt_show()` |
+| `show neighbors` — 显示邻居状态 | `src/neighbor.c` → `nt_show()` |
 | `link down <neighbor_id>` — 手动断开链路 | `src/tcp_mgmt.c` → `cmd_link_down()`, 设置邻居 inactive + 毒性逆转 |
 | `link up <neighbor_id>` — 恢复链路 | `src/tcp_mgmt.c` → `cmd_link_up()`, 设置邻居 active + 发送 RIP Request |
 | `quit` — 断开管理连接 | `src/tcp_mgmt.c` → `mgmt_client_handler()`, 检测 `quit` 命令 break |

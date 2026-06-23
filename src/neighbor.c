@@ -92,19 +92,19 @@ int *nt_check_timeouts(const neighbor_table_t *nt, int *count_out)
     return result;
 }
 
-void nt_dump(const neighbor_table_t *nt, FILE *fp)
+void nt_show(const neighbor_table_t *nt, int fd)
 {
     char addr_buf[64];
     char time_buf[32];
 
-    fprintf(fp, "%-8s %-22s %-6s %s\n",
+    dprintf(fd, "%-8s %-22s %-6s %s\n",
             "ID", "Address", "State", "Last Recv");
-    fprintf(fp, "----------------------------------------------"
+    dprintf(fd, "----------------------------------------------"
                "----------\n");
 
     for (int i = 0; i < nt->count; i++) {
         const neighbor_t *n = &nt->entries[i];
-        fprintf(fp, "%-8s %-22s %-6s %s\n",
+        dprintf(fd, "%-8s %-22s %-6s %s\n",
                 n->id,
                 sockaddr_str((const struct sockaddr *)&n->addr,
                              addr_buf, sizeof(addr_buf)),
@@ -112,5 +112,5 @@ void nt_dump(const neighbor_table_t *nt, FILE *fp)
                 time_str(n->last_recv, time_buf, sizeof(time_buf)));
     }
 
-    fprintf(fp, "\nTotal: %d neighbors\n", nt->count);
+    dprintf(fd, "\nTotal: %d neighbors\n", nt->count);
 }
