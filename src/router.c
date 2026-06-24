@@ -96,10 +96,11 @@ int router_bind(router *r)
     return 0;
 }
 
-// 周期性更新（每 30 秒），使用 select/poll/epoll 的超时机制实现
+// 每 30 秒周期性更新，使用 select 的超时机制实现
 static void periodic_update(router *r)
 {
     time_t now = time(NULL);
+    // 如果距离上次周期更新不足 30 秒，直接返回
     if (now - r->last_periodic < RIP_PERIODIC_SEC) return;
 
     r->last_periodic = now;
@@ -113,11 +114,12 @@ static void periodic_update(router *r)
     }
 }
 
-// 触发更新（路由表变化时立即发送）
+// 触发更新 路由表变化时立即发送
 static void triggered_update(router *r)
 {
     log_printf("triggered update (route table changed)");
 
+    // 遍历邻居表，向所有活跃邻居发送 RIP 响应报文
     for (int i = 0; i < r->nt.count; i++) {
         if (!r->nt.neighbors[i].active) continue;
         rip_send_response(r->udp_fd,
@@ -125,6 +127,7 @@ static void triggered_update(router *r)
                          r->nt.neighbors[i].addr_len, &r->rt, i);
     }
 
+    // 触发更新后清除 changed 标志，避免重复发送
     pthread_mutex_lock(&r->rt.lock);
     r->rt.changed = 0;
     pthread_mutex_unlock(&r->rt.lock);
@@ -181,8 +184,14 @@ int router_run(router *r)
         int max_fd = r->udp_fd;
         FD_SET(r->udp_fd, &readfds);
 
+        // select 超时 = 距下次周期发送的剩余秒数，最少 1s
+        // 没包时直接睡到该发的时刻，收包提前返回后自动重新计算剩余时间
+        time_t elapsed = time(NULL) - r->last_periodic;
+        time_t remaining = (elapsed < RIP_PERIODIC_SEC)
+                         ? (RIP_PERIODIC_SEC - elapsed) : 0;
+
         struct timeval tv;
-        tv.tv_sec = 1;
+        tv.tv_sec = (remaining > 1) ? remaining : 1; // 防止 remaining 是 0，select 无限唤醒返回 忙轮询
         tv.tv_usec = 0;
 
         int ret = select(max_fd + 1, &readfds, NULL, NULL, &tv);
