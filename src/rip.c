@@ -62,8 +62,7 @@ int rip_send_response(int udp_fd, const struct sockaddr *dst,
     return count;
 }
 
-int rip_send_request(int udp_fd, const struct sockaddr *dst,
-                     socklen_t dst_len)
+int rip_send_request(int udp_fd, const struct sockaddr *dst, socklen_t dst_len)
 {
     uint8_t buf[RIP_HEADER_SIZE];
     rip_header *hdr = (rip_header *)buf;
@@ -79,8 +78,7 @@ int rip_send_request(int udp_fd, const struct sockaddr *dst,
     return 0;
 }
 
-int rip_recv(int udp_fd, route_table *rt, neighborable *nt,
-             int *from_nbr_idx)
+int rip_recv(int udp_fd, route_table *rt, neighborable *nt)
 {
     uint8_t buf[4096];
     struct sockaddr_storage from;
@@ -108,7 +106,6 @@ int rip_recv(int udp_fd, route_table *rt, neighborable *nt,
 
     // 识别发送方邻居
     int nbr_idx = nt_find_by_addr(nt, (const struct sockaddr *)&from);
-    if (from_nbr_idx) *from_nbr_idx = nbr_idx;
 
     char peer[64];
 

@@ -6,7 +6,6 @@ void nt_init(neighborable *nt)
     memset(nt, 0, sizeof(*nt));
 }
 
-// 成功返回索引
 int nt_add(neighborable *nt, const char *id, const struct sockaddr *addr, socklen_t addr_len)
 {
     if (nt->count >= MAX_NEIGHBORS) {
@@ -40,6 +39,7 @@ int nt_find_by_id(const neighborable *nt, const char *id)
     return -1;
 }
 
+// 根据 sockaddr 查找邻居索引，返回索引或-1
 int nt_find_by_addr(const neighborable *nt, const struct sockaddr *addr)
 {
     for (int i = 0; i < nt->count; i++) {

@@ -193,8 +193,7 @@ int router_run(router *r)
         }
 
         if (FD_ISSET(r->udp_fd, &readfds)) {
-            int from_nbr = -1;
-            rip_recv(r->udp_fd, &r->rt, &r->nt, &from_nbr);
+            rip_recv(r->udp_fd, &r->rt, &r->nt);
 
             pthread_mutex_lock(&r->rt.lock);
             int changed = r->rt.changed;

@@ -48,8 +48,6 @@ int rip_send_request(int udp_fd, const struct sockaddr *dst, socklen_t dst_len);
 // 收到 RESPONSE：逐条调用 rt_upsert() 更新路由表
 // 收到 REQUEST：立即向发送者回复路由表
 // 返回处理的条目数，-1 表示出错
-// *from_nbr_idx 被设为邻居索引（未知则为 -1）
-int rip_recv(int udp_fd, route_table *rt, neighborable *nt,
-             int *from_nbr_idx);
+int rip_recv(int udp_fd, route_table *rt, neighborable *nt);
 
 #endif // RIP_H
