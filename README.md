@@ -73,7 +73,7 @@ neighbors = (
 );
 
 # 直连网络
-networks = (
+direct_networks = (
     { address = "10.0.1.0/24"; }
 );
 ```

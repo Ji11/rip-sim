@@ -34,7 +34,7 @@
  *       { id="2"; address="..."; port=5202; },   → 数组元素 (group)
  *   );                               → config_setting_get_elem() 遍历
  *
- *   networks = (                     → config_lookup("networks")
+ *   direct_networks = (                     → config_lookup("direct_networks")
  *       { address="10.0.1.0/24"; },  → 数组元素 (group)
  *   );
  */
@@ -72,12 +72,11 @@ static int resolve_addr(const char *hostname, int port,
 
 int config_load(const char *path, router *router)
 {
-    // 1. 初始化配置对象，从文件读取
+    // 初始化配置对象，从文件读取
     config_t cfg;
     config_init(&cfg);
 
     if (config_read_file(&cfg, path) == CONFIG_FALSE) {
-        // 读取失败：打印错误位置和原因
         log_printf("ERROR: %s:%d — %s",
                    config_error_file(&cfg),
                    config_error_line(&cfg),
@@ -86,9 +85,9 @@ int config_load(const char *path, router *router)
         return -1;
     }
 
-    // 2. 读取标量值：id（字符串）、udp_port / tcp_port（整数）
-    //    config_lookup_string(cfg, "路径", &输出指针)
-    //    成功返回 CONFIG_TRUE，键不存在返回 CONFIG_FALSE
+    // 读取标量值：id（字符串）、udp_port / tcp_port（整数）
+    // config_lookup_string(cfg, "路径", &输出指针)
+    // 成功返回 CONFIG_TRUE，否则返回 CONFIG_FALSE
     const char *id_str;
     if (config_lookup_string(&cfg, "id", &id_str) == CONFIG_TRUE) {
         strncpy(router->id, id_str, sizeof(router->id) - 1);
@@ -96,20 +95,19 @@ int config_load(const char *path, router *router)
         log_printf("config: id=%s", router->id);
     }
 
-    // config_lookup_int(cfg, "路径", &输出整数) — 同样 CONFIG_TRUE/FALSE
+    // config_lookup_int(cfg, "路径", &输出整数)
     config_lookup_int(&cfg, "udp_port", &router->udp_port);
     config_lookup_int(&cfg, "tcp_port", &router->tcp_port);
     log_printf("config: udp_port=%d, tcp_port=%d",
                router->udp_port, router->tcp_port);
 
-    // 3. 读取数组：neighbors = ( {...}, {...} )
-    //    config_lookup 返回 config_setting_t * 节点指针，不存在返回 NULL
+    // 读取邻居数组：neighbors = ( {...}, {...} )
+    // config_lookup 返回 config_setting_t * 节点指针
     config_setting_t *nbrs = config_lookup(&cfg, "neighbors");
     if (nbrs) {
-        // config_setting_length 获取数组长度
-        int count = config_setting_length(nbrs);
+        int count = config_setting_length(nbrs); // 获取数组长度
         for (int i = 0; i < count; i++) {
-            // config_setting_get_elem 获取数组第 i 个元素（group 类型）
+            // config_setting_get_elem 获取数组第 i 个元素
             config_setting_t *n = config_setting_get_elem(nbrs, i);
 
             // config_setting_lookup_* 从 group 中按键读取字段
@@ -119,6 +117,7 @@ int config_load(const char *path, router *router)
             config_setting_lookup_string(n, "address", &addr_str);
             config_setting_lookup_int(n, "port", &port);
 
+            // 解析地址字符串为 sockaddr_storage
             struct sockaddr_storage sa;
             socklen_t sa_len;
             if (resolve_addr(addr_str, port, &sa, &sa_len) < 0) {
@@ -128,8 +127,9 @@ int config_load(const char *path, router *router)
                 return -1;
             }
 
-            if (nt_add(&router->nt, nid,
-                       (const struct sockaddr *)&sa, sa_len) < 0) {
+            // 解析完，sa 中存放了邻居的 sockaddr
+            // 将邻居添加到邻居表中
+            if (nt_add(&router->nt, nid, (const struct sockaddr *)&sa, sa_len) < 0) {
                 log_printf("ERROR: failed to add neighbor %s", nid);
                 config_destroy(&cfg);
                 return -1;
@@ -137,8 +137,8 @@ int config_load(const char *path, router *router)
         }
     }
 
-    // 4. 读取 networks 数组，与 neighbors 结构相同
-    config_setting_t *nets = config_lookup(&cfg, "networks");
+    // 读取 direct_networks 数组
+    config_setting_t *nets = config_lookup(&cfg, "direct_networks");
     if (nets) {
         int count = config_setting_length(nets);
         for (int i = 0; i < count; i++) {
@@ -147,6 +147,7 @@ int config_load(const char *path, router *router)
             const char *cidr;
             config_setting_lookup_string(net, "address", &cidr);
 
+            // 根据地址族，解析 CIDR 字符串为 sockaddr_storage + prefix_len
             struct sockaddr_storage sa;
             int prefix_len, af;
             if (parse_cidr(cidr, &sa, &prefix_len, &af) < 0) {
@@ -155,6 +156,7 @@ int config_load(const char *path, router *router)
                 return -1;
             }
 
+            // 前面已经解析了 CIDR，现在将其添加为直连路由到路由表中
             // 从 sockaddr 提取二进制地址到 dest[16]
             uint8_t dest[16];
             memset(dest, 0, 16);
@@ -174,10 +176,8 @@ int config_load(const char *path, router *router)
         }
     }
 
-    // 5. 销毁配置对象
-    config_destroy(&cfg);
+    config_destroy(&cfg); // 销毁配置对象
 
-    // 校验必要字段
     if (!router->id[0] || !router->udp_port || !router->tcp_port) {
         log_printf("ERROR: config missing id, udp_port, or tcp_port");
         return -1;
