@@ -117,7 +117,7 @@ void router_shutdown(router *r);
 void rt_init(route_table *rt);
 void rt_destroy(route_table *rt);
 int rt_upsert(route_table *rt, int af, const uint8_t *dest, int prefix_len,
-	const uint8_t *next_hop, int metric, int from_neighbor);
+	          const uint8_t *next_hop, int metric, int from_neighbor);
 int rt_find(const route_table *rt, int af, const uint8_t *dest, int prefix_len);
 int rt_poison_from_neighbor(route_table *rt, int nbr_idx);
 int rt_garbage_collect(route_table *rt);
@@ -134,7 +134,7 @@ void nt_show(const neighbor_table *nt, int fd);
 
 // rip.c
 int rip_send_response(int udp_fd, const struct sockaddr *dst, socklen_t dst_len,
-	route_table *rt, int poison_reverse_idx);
+	                  route_table *rt, int poison_reverse_idx);
 int rip_send_request(int udp_fd, const struct sockaddr *dst, socklen_t dst_len);
 int rip_recv(int udp_fd, route_table *rt, neighbor_table *nt);
 

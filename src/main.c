@@ -16,7 +16,7 @@ static void sigchld_handler(int sig)
     errno = saved_errno;
 }
 
-// SIGINT / SIGTERM 处理器：触发优雅关闭
+// SIGINT / SIGTERM 处理器：触发关闭
 static void sigint_handler(int sig)
 {
     (void)sig;
@@ -28,7 +28,7 @@ static int setup_signals(void)
 {
     struct sigaction sa;
 
-    // SIGPIPE：忽略（写入已关闭的 TCP 连接不应导致进程崩溃）
+    // SIGPIPE：忽略 写入已关闭的 TCP 连接不应导致进程崩溃
     memset(&sa, 0, sizeof(sa));
     sa.sa_handler = SIG_IGN;
     if (sigaction(SIGPIPE, &sa, NULL) < 0) {
@@ -44,7 +44,7 @@ static int setup_signals(void)
         return -1;
     }
 
-    // SIGINT / SIGTERM：优雅退出
+    // SIGINT / SIGTERM：退出
     sa.sa_handler = sigint_handler;
     sa.sa_flags = 0;
     if (sigaction(SIGINT, &sa, NULL) < 0) {
