@@ -4,9 +4,6 @@
 #include <libconfig.h>
 
 /*
- * 网络课学了 libconfig，正好用上，比 fgets+sscanf 省事
- *
- * 用到的几个函数：
  *   config_init / config_read_file     — 初始化 + 读文件
  *   config_lookup_string / _int        — 读字符串或整数
  *   config_lookup                      — 拿数组/列表节点
@@ -15,16 +12,19 @@
  *   config_error_file / line / text    — 语法出错了打错误日志
  *   config_destroy                     — 用完释放
  *
- * 对应的 .cfg 大概这样：
+ * 对应的 .cfg 和用到的 libconfig 函数：
  *
- *   id        = "1";
- *   udp_port  = 5201;
- *   tcp_port  = 8021;
- *   neighbors = (
- *       { id = "2";  address = "127.0.0.1";  port = 5202; }
- *   );
- *   direct_networks = (
- *       { address = "10.0.1.0/24"; }
+ *   id        = "1";                 → config_lookup_string("id")
+ *   udp_port  = 5201;               → config_lookup_int("udp_port")
+ *   tcp_port  = 8021;               → config_lookup_int("tcp_port")
+ *
+ *   neighbors = (                    → config_lookup("neighbors")
+ *       { id="2"; address="...";     → config_setting_lookup_string("id")
+ *         port=5202; },              → config_setting_lookup_int("port")
+ *   );                               → config_setting_length/get_elem 遍历
+ *
+ *   direct_networks = (              → config_lookup("direct_networks")
+ *       { address="10.0.1.0/24"; },  → config_setting_lookup_string("address")
  *   );
  */
 
