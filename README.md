@@ -62,17 +62,19 @@ nc 127.0.0.1 8021
 ## 配置文件格式（libconfig）
 
 ```ini
-# 路由器基本信息
+# 路由器 ID
 id        = "1";
+# UDP 端口（RIP 协议）
 udp_port  = 5201;
+# TCP 端口（管理接口）
 tcp_port  = 8021;
 
-# 邻居列表（链状拓扑 R1 只连 R2）
+# 邻居定义
 neighbors = (
     { id = "2";  address = "127.0.0.1";  port = 5202; }
 );
 
-# 直连网络
+# 直连网段
 direct_networks = (
     { address = "10.0.1.0/24"; }
 );
