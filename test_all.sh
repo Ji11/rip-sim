@@ -31,9 +31,9 @@ echo ""
 echo "============================================"
 echo "  3.1 测试环境：启动 3 台路由器 (链状拓扑 R1—R2—R3)"
 echo "============================================"
-./ripd config/router1.conf 2>/tmp/r1.log &
-./ripd config/router2.conf 2>/tmp/r2.log &
-./ripd config/router3.conf 2>/tmp/r3.log &
+./ripd config/router1.cfg 2>/tmp/r1.log &
+./ripd config/router2.cfg 2>/tmp/r2.log &
+./ripd config/router3.cfg 2>/tmp/r3.log &
 info "路由器已启动: R1(tcp:8021) R2(tcp:8022) R3(tcp:8023)"
 info "拓扑: R1---R2---R3 (链状)"
 pass "3.1 路由器进程全部启动"
@@ -192,9 +192,9 @@ sleep 1
 # 用 POISON_REVERSE=0 宏编译，无需修改源码
 make nopoison > /dev/null 2>&1
 
-./ripd config/router1.conf 2>/dev/null &
-./ripd config/router2.conf 2>/dev/null &
-./ripd config/router3.conf 2>/dev/null &
+./ripd config/router1.cfg 2>/dev/null &
+./ripd config/router2.cfg 2>/dev/null &
+./ripd config/router3.cfg 2>/dev/null &
 sleep 35
 
 echo ""

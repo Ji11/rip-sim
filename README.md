@@ -29,9 +29,9 @@ make
 在三个终端中分别启动：
 
 ```bash
-./ripd config/router1.conf    # 路由器 1 (UDP 5201, TCP 8021)
-./ripd config/router2.conf    # 路由器 2 (UDP 5202, TCP 8022)
-./ripd config/router3.conf    # 路由器 3 (UDP 5203, TCP 8023)
+./ripd config/router1.cfg    # 路由器 1 (UDP 5201, TCP 8021)
+./ripd config/router2.cfg    # 路由器 2 (UDP 5202, TCP 8022)
+./ripd config/router3.cfg    # 路由器 3 (UDP 5203, TCP 8023)
 ```
 
 或使用便捷目标：
@@ -97,7 +97,7 @@ networks = (
 所有日志输出到 stderr，格式为 `[HH:MM:SS] 消息`，可重定向到文件：
 
 ```bash
-./ripd config/router1.conf 2>rip.log
+./ripd config/router1.cfg 2>rip.log
 ```
 
 ## 项目结构
@@ -107,9 +107,9 @@ rip-sim/
 ├── Makefile
 ├── README.md
 ├── config/
-│   ├── router1.conf
-│   ├── router2.conf
-│   └── router3.conf
+│   ├── router1.cfg
+│   ├── router2.cfg
+│   └── router3.cfg
 └── src/
     ├── ripd.h          # 共享头文件（类型、常量、函数声明）
     ├── main.c          # 入口、信号处理
