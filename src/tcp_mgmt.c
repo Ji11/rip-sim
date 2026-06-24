@@ -1,11 +1,5 @@
-#include "tcp_mgmt.h"
-#include "rip.h"
+#include "ripd.h"
 #include <unistd.h>
-#include <errno.h>
-#include <pthread.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 
 // 与主线程共享的全局指针
 static route_table   *g_mgmt_rt;

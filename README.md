@@ -108,14 +108,15 @@ rip-sim/
 │   ├── router2.conf
 │   └── router3.conf
 └── src/
+    ├── ripd.h          # 共享头文件（类型、常量、函数声明）
     ├── main.c          # 入口、信号处理
-    ├── config.c/h      # 配置文件解析（getaddrinfo）
-    ├── router.c/h      # 路由器核心、主循环（select）
-    ├── route_table.c/h # 路由表 CRUD、Bellman-Ford
-    ├── neighbor.c/h    # 邻居状态管理
-    ├── rip.c/h         # RIP 协议报文、收发
-    ├── tcp_mgmt.c/h    # TCP 管理接口（pthread）
-    └── utils.c/h       # 日志、地址工具
+    ├── config.c        # 配置文件解析（getaddrinfo）
+    ├── router.c        # 路由器核心、主循环（select）
+    ├── route_table.c   # 路由表 CRUD、Bellman-Ford
+    ├── neighbor.c      # 邻居状态管理
+    ├── rip.c           # RIP 协议报文、收发
+    ├── tcp_mgmt.c      # TCP 管理接口（pthread）
+    └── utils.c         # 日志、地址工具
 ```
 
 ## 清理

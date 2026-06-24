@@ -1,7 +1,6 @@
 CC       = gcc
 CFLAGS   = -Wall -Wextra -std=gnu11 -D_GNU_SOURCE -DPOISON_REVERSE=1 -g -O2
 LDFLAGS  = -lpthread
-LDFLAGS  = -lpthread
 
 SRCDIR   = src
 OBJDIR   = obj

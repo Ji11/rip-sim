@@ -1,4 +1,4 @@
-#include "config.h"
+#include "ripd.h"
 #include <netdb.h>
 #include <unistd.h>
 

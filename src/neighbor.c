@@ -1,4 +1,4 @@
-#include "neighbor.h"
+#include "ripd.h"
 
 void nt_init(neighborable *nt)
 {

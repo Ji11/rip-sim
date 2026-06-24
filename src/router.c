@@ -1,6 +1,4 @@
-#include "router.h"
-#include "rip.h"
-#include "tcp_mgmt.h"
+#include "ripd.h"
 #include <unistd.h>
 #include <errno.h>
 #include <sys/select.h>

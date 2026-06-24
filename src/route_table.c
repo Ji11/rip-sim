@@ -1,4 +1,4 @@
-#include "route_table.h"
+#include "ripd.h"
 
 void rt_init(route_table *rt)
 {

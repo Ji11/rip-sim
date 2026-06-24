@@ -1,5 +1,4 @@
-#include "router.h"
-#include "config.h"
+#include "ripd.h"
 #include <signal.h>
 #include <unistd.h>
 #include <sys/wait.h>

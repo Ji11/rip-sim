@@ -34,7 +34,7 @@
 
 | 任务书要求 | 代码位置 |
 |------------|----------|
-| 数据结构：目标网络、下一跳、度量 | `src/route_table.h` → `route` 结构体 |
+| 数据结构：目标网络、下一跳、度量 | `src/ripd.h` → `route` 结构体 |
 | 初始时只知道自己的直连网络和邻居 | `src/config.c` → `config_load()`, 解析 `network` 行，调用 `rt_upsert(..., metric=1, from_neighbor=-1)` 添加直连路由 |
 | 支持通过 TCP 管理接口查看路由表（功能 6） | `src/route_table.c` → `rt_show()` |
 | Bellman-Ford 更新算法 | `src/route_table.c` → `rt_upsert()`, 实现四段决策逻辑：直连路由保护 → 同邻居无条件更新 → 同跳数跳过 → 更优路由替换 |
@@ -48,7 +48,7 @@
 | 接收并处理邻居路由更新 | `src/rip.c` → `rip_recv()`, 解析 RIP 报文，调用 `rt_upsert()` |
 | Bellman-Ford 更新路由 | `src/route_table.c` → `rt_upsert()`, 实现标准 Bellman-Ford：新度量 = 收到度量 + 1 |
 | 触发更新：路由变化时立即发送，不等定时器 | `src/router.c` → `triggered_update()`, 检测 `rt.changed` 标志，变化时立即发送 |
-| RIP 报文格式定义 | `src/rip.h` → `rip_header`, `rip_route` 结构体（22 字节/条目） |
+| RIP 报文格式定义 | `src/ripd.h` → `rip_header`, `rip_route` 结构体（22 字节/条目） |
 | 报文构造与发送 | `src/rip.c` → `rip_send_response()` |
 | 启动时发送 RIP Request 请求邻居路由 | `src/router.c` → `router_run()`, 调用 `rip_send_request()` |
 
@@ -117,7 +117,7 @@
 ## 五、快速导航：验收讲代码时的阅读顺序
 
 1. **入口和整体流程**：`src/main.c` → `src/router.c`（`router_run()` 主循环）
-2. **数据结构**：`src/route_table.h`（路由条目）→ `src/neighbor.h`（邻居条目）
+2. **数据结构**：`src/ripd.h`（路由条目 `route`、邻居条目 `neighbor`）
 3. **RIP 协议核心**：`src/rip.c`（报文收发）→ `src/route_table.c`（Bellman-Ford 更新）
 4. **关键算法**：`src/route_table.c` → `rt_upsert()`（四段决策逻辑）、`src/rip.c` → `rip_send_response()`（毒性逆转）
 5. **I/O 复用与定时**：`src/router.c` → `router_run()`（select 驱动的主循环）、`periodic_update()`（30s 周期）
