@@ -5,7 +5,7 @@
 #include <sys/wait.h>
 
 // 全局路由器实例，信号处理器需要访问
-static router_t g_router;
+static router g_router;
 
 // SIGCHLD 处理器：回收僵尸子进程，防止资源泄漏
 static void sigchld_handler(int sig)

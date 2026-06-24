@@ -5,12 +5,12 @@
 #include <errno.h>
 #include <sys/select.h>
 
-void router_shutdown(router_t *r)
+void router_shutdown(router *r)
 {
     r->shutdown = 1;
 }
 
-void router_init(router_t *r)
+void router_init(router *r)
 {
     memset(r, 0, sizeof(*r));
     rt_init(&r->rt);
@@ -18,14 +18,14 @@ void router_init(router_t *r)
     r->udp_fd = -1;
 }
 
-void router_destroy(router_t *r)
+void router_destroy(router *r)
 {
     tcp_mgmt_stop();
     if (r->udp_fd >= 0) close(r->udp_fd);
     rt_destroy(&r->rt);
 }
 
-int router_bind(router_t *r)
+int router_bind(router *r)
 {
     int use_v6 = 0;
     // 根据邻居地址族决定 socket 类型：有 IPv6 邻居则用双栈，否则纯 IPv4
@@ -97,7 +97,7 @@ int router_bind(router_t *r)
 }
 
 // 周期性更新（每 30 秒），使用 select/poll/epoll 的超时机制实现
-static void periodic_update(router_t *r)
+static void periodic_update(router *r)
 {
     time_t now = time(NULL);
     if (now - r->last_periodic < RIP_PERIODIC_SEC) return;
@@ -114,7 +114,7 @@ static void periodic_update(router_t *r)
 }
 
 // 触发更新（路由表变化时立即发送）
-static void triggered_update(router_t *r)
+static void triggered_update(router *r)
 {
     log_printf("triggered update (route table changed)");
 
@@ -131,7 +131,7 @@ static void triggered_update(router_t *r)
 }
 
 // 邻居超时检测
-static void check_neighbor_timeouts(router_t *r)
+static void check_neighborimeouts(router *r)
 {
     int count = 0;
     int *indices = nt_check_timeouts(&r->nt, &count);
@@ -156,7 +156,7 @@ static void check_neighbor_timeouts(router_t *r)
 }
 
 // 主事件循环 select
-int router_run(router_t *r)
+int router_run(router *r)
 {
     log_printf("router %s starting main loop", r->id);
 
@@ -206,7 +206,7 @@ int router_run(router_t *r)
         }
 
         periodic_update(r);
-        check_neighbor_timeouts(r);
+        check_neighborimeouts(r);
 
         int collected = rt_garbage_collect(&r->rt);
         if (collected > 0) {

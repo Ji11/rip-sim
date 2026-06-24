@@ -1,19 +1,19 @@
 #include "route_table.h"
 
-void rt_init(route_table_t *rt)
+void rt_init(route_table *rt)
 {
     memset(rt, 0, sizeof(*rt));
     pthread_mutex_init(&rt->lock, NULL);
     rt->changed = 0;
 }
 
-void rt_destroy(route_table_t *rt)
+void rt_destroy(route_table *rt)
 {
     pthread_mutex_destroy(&rt->lock);
 }
 
 // 按目标 + 前缀查找路由，返回索引或 -1
-int rt_find(const route_table_t *rt, int af, const uint8_t *dest, int prefix_len)
+int rt_find(const route_table *rt, int af, const uint8_t *dest, int prefix_len)
 {
     for (int i = 0; i < rt->count; i++) {
         if (route_key_eq(af, dest, prefix_len,
@@ -34,7 +34,7 @@ int rt_find(const route_table_t *rt, int af, const uint8_t *dest, int prefix_len
 //   4. 来自不同邻居、度量更优：替换
 
 // 添加或更新路由。返回 1 表示新增/修改，0 表示无变化
-int rt_upsert(route_table_t *rt, int af, const uint8_t *dest,
+int rt_upsert(route_table *rt, int af, const uint8_t *dest,
               int prefix_len, const uint8_t *next_hop, int metric,
               int from_neighbor)
 {
@@ -55,7 +55,7 @@ int rt_upsert(route_table_t *rt, int af, const uint8_t *dest,
             return 0;
         }
         idx = rt->count++;
-        route_entry_t *e = &rt->entries[idx];
+        route *e = &rt->entries[idx];
         e->af = af;
         addr_copy(af, dest, e->dest);
         e->prefix_len = prefix_len;
@@ -70,7 +70,7 @@ int rt_upsert(route_table_t *rt, int af, const uint8_t *dest,
 
     // idx > 0，路由表中已有路由，则定位这条路由，进行更新决策
     // e 是路由表中已有的条目，from_neighbor 和 metric 是新路由的来源和度量
-    route_entry_t *e = &rt->entries[idx];
+    route *e = &rt->entries[idx];
 
     // 规则 1：直连路由保护 —— 不允许被更差或相等的邻居路由覆盖
     // e->from_neighbor == -1 表示已有的路由是直连路由
@@ -117,7 +117,7 @@ int rt_upsert(route_table_t *rt, int af, const uint8_t *dest,
     return 0;
 }
 
-int rt_poison_from_neighbor(route_table_t *rt, int nbr_idx)
+int rt_poison_from_neighbor(route_table *rt, int nbr_idx)
 {
     int poisoned = 0;
 
@@ -136,7 +136,7 @@ int rt_poison_from_neighbor(route_table_t *rt, int nbr_idx)
     return poisoned;
 }
 
-int rt_garbage_collect(route_table_t *rt)
+int rt_garbage_collect(route_table *rt)
 {
     int removed = 0;
     time_t now = time(NULL);
@@ -149,7 +149,7 @@ int rt_garbage_collect(route_table_t *rt)
                 // 删除该条目
                 if (i < rt->count - 1) {
                     memmove(&rt->entries[i], &rt->entries[i + 1],
-                            (rt->count - i - 1) * sizeof(route_entry_t));
+                            (rt->count - i - 1) * sizeof(route));
                 }
                 rt->count--;
                 removed++;
@@ -171,7 +171,7 @@ int rt_garbage_collect(route_table_t *rt)
 // 10.0.2.0                 24     127.0.0.1                16      neighbor [GC]
 //
 // Total: 3 routes
-void rt_show(route_table_t *rt, int fd)
+void rt_show(route_table *rt, int fd)
 {
     char dest_buf[INET6_ADDRSTRLEN];
     char nh_buf[INET6_ADDRSTRLEN];
@@ -184,7 +184,7 @@ void rt_show(route_table_t *rt, int fd)
                "--------------\n");
 
     for (int i = 0; i < rt->count; i++) {
-        route_entry_t *e = &rt->entries[i];
+        route *e = &rt->entries[i];
 
         const char *dest_str = addr_str(e->af, e->dest, dest_buf, sizeof(dest_buf));
         const char *nh_str   = addr_str(e->af, e->next_hop, nh_buf, sizeof(nh_buf));

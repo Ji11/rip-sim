@@ -46,7 +46,7 @@ static int resolve_addr(const char *hostname, const char *port,
 }
 
 // 解析配置文件
-int config_load(const char *path, router_t *router)
+int config_load(const char *path, router *router)
 {
     FILE *fp = fopen(path, "r");
     if (!fp) {

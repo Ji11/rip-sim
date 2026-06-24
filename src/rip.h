@@ -14,15 +14,15 @@
 #define RIP_MAX_ENTRIES     25  // 每个 UDP 数据报最多携带的路由条目数
 
 // 以下两个结构体是用 reserved 字段对齐的，否则还需要 __attribute__((packed))
-// rip_header_t: command(1) + version(1) + reserved(2) = 4 bytes
-// rip_entry_t:  af(2) + addr(16) + prefix_len(1) + reserved(1) + metric(2) = 22 bytes
+// rip_header: command(1) + version(1) + reserved(2) = 4 bytes
+// rip_route:  af(2) + addr(16) + prefix_len(1) + reserved(1) + metric(2) = 22 bytes
 
 // RIP 报文头
 typedef struct {
     uint8_t  command;       // 命令类型：1=请求, 2=响应
     uint8_t  version;       // 协议版本
     uint16_t reserved;      // 保留字段
-} rip_header_t;
+} rip_header;
 
 // RIP 路由条目（22 bytes）
 typedef struct {
@@ -31,14 +31,14 @@ typedef struct {
     uint8_t  prefix_len;    // 前缀长度
     uint8_t  reserved;      // 保留
     uint16_t metric;        // 度量 1-16，网络字节序
-} rip_entry_t;
+} rip_route;
 
-// 完整 RIP 报文 = rip_header_t + N * rip_entry_t
+// 完整 RIP 报文 = rip_header + N * rip_route
 
 // 构造并发送 RIP 响应到指定邻居
 // poison_reverse_idx >= 0 时：将从该邻居学到的路由毒性化（metric=16）
 int rip_send_response(int udp_fd, const struct sockaddr *dst,
-                      socklen_t dst_len, route_table_t *rt,
+                      socklen_t dst_len, route_table *rt,
                       int poison_reverse_idx);
 
 // 发送 RIP 请求，用于主动拉取邻居路由表
@@ -49,7 +49,7 @@ int rip_send_request(int udp_fd, const struct sockaddr *dst, socklen_t dst_len);
 // 收到 REQUEST：立即向发送者回复路由表
 // 返回处理的条目数，-1 表示出错
 // *from_nbr_idx 被设为邻居索引（未知则为 -1）
-int rip_recv(int udp_fd, route_table_t *rt, neighbor_table_t *nt,
+int rip_recv(int udp_fd, route_table *rt, neighborable *nt,
              int *from_nbr_idx);
 
 #endif // RIP_H
