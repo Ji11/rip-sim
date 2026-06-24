@@ -3,17 +3,17 @@
 #include <errno.h>
 
 #define RIP_HEADER_SIZE  4   // 头部：command(1) + version(1) + reserved(2)
-#define RIP_ENTRY_SIZE   24  // 每条路由：2+2+16+1+1+2 = 24 字节
+#define RIP_ENTRY_SIZE   24  // 每条路由 24 bytes
 
 int rip_send_response(int udp_fd, const struct sockaddr *dst,
                       socklen_t dst_len, route_table_t *rt,
                       int poison_reverse_idx)
 {
-    uint8_t buf[RIP_MSG_MAX];
+    uint8_t buf[RIP_MSG_MAX]; // 定义一个大 buf 来存放 RIP 报文
     int offset = 0;
 
-    // 构造报文头
-    rip_header_t *hdr = (rip_header_t *)(buf + offset);
+    // 构造 4 bytes 的报文头，构造完 offset += 4，开始逐条构造路由条目
+    rip_header_t *hdr = (rip_header_t *)(buf + offset); // 报文头指向 buf[0]，[0] = command, [1] = version, [2-3] = reserved
     hdr->command = RIP_CMD_RESPONSE;
     hdr->version = RIP_VERSION;
     hdr->reserved = 0;
@@ -22,17 +22,22 @@ int rip_send_response(int udp_fd, const struct sockaddr *dst,
     pthread_mutex_lock(&rt->lock);
     int count = 0;
 
+    // 遍历路由表，构造每条路由条目，最多 RIP_MAX_ENTRIES = 25 条
     for (int i = 0; i < rt->count && count < RIP_MAX_ENTRIES; i++) {
         const route_entry_t *e = &rt->entries[i];
 
+        // 每个条目放在从 buf[offset] 开始的 24 bytes 处
         rip_entry_t *entry = (rip_entry_t *)(buf + offset);
 
+        // route_entry_t.metric 是 int，rip_entry_t.metric 是 uint16_t，且需要网络字节序
         uint16_t metric = (uint16_t)e->metric;
 
         // 毒性逆转：如果该路由是从正要发送给的邻居学到的，将其度量设为不可达
+#if POISON_REVERSE
         if (poison_reverse_idx >= 0 && e->from_neighbor == poison_reverse_idx) {
             metric = RIP_INFINITY;
         }
+#endif
 
         entry->af = htons(e->af == AF_INET6 ? RIP_AFI_IPV6 : RIP_AFI_IPV4);
         entry->tag = 0;

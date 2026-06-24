@@ -35,7 +35,11 @@ static void cmd_link_down(int fd, const char *neighbor_id)
     }
 
     nt_set_active(g_mgmt_nt, idx, 0);
+#if POISON_REVERSE
     int poisoned = rt_poison_from_neighbor(g_mgmt_rt, idx);
+#else
+    int poisoned = 0;
+#endif
     dprintf(fd, "OK: link DOWN to neighbor '%s', %d routes poisoned\n",
             neighbor_id, poisoned);
 }

@@ -143,7 +143,11 @@ static void check_neighbor_timeouts(router_t *r)
 
         nt_set_active(&r->nt, idx, 0);
 
+#if POISON_REVERSE
         int poisoned = rt_poison_from_neighbor(&r->rt, idx);
+#else
+        int poisoned = 0;
+#endif
         log_printf("%d routes poisoned from timed-out neighbor %s",
                 poisoned, r->nt.entries[idx].id);
     }
@@ -151,7 +155,7 @@ static void check_neighbor_timeouts(router_t *r)
     free(indices);
 }
 
-// 主事件循环（select 驱动）
+// 主事件循环 select
 int router_run(router_t *r)
 {
     log_printf("router %s starting main loop", r->id);

@@ -1,5 +1,5 @@
 CC       = gcc
-CFLAGS   = -Wall -Wextra -std=gnu11 -D_GNU_SOURCE -g -O2
+CFLAGS   = -Wall -Wextra -std=gnu11 -D_GNU_SOURCE -DPOISON_REVERSE=1 -g -O2
 LDFLAGS  = -lpthread
 LDFLAGS  = -lpthread
 
@@ -10,9 +10,14 @@ TARGET   = ripd
 SRCS     = $(wildcard $(SRCDIR)/*.c)
 OBJS     = $(patsubst $(SRCDIR)/%.c, $(OBJDIR)/%.o, $(SRCS))
 
-.PHONY: all clean run1 run2 run3 test
+.PHONY: all clean run1 run2 run3 test nopoison
 
 all: $(TARGET)
+
+# 编译时关闭毒性逆转，用于对比测试
+nopoison:
+	$(MAKE) clean
+	$(MAKE) all CFLAGS="-Wall -Wextra -std=gnu11 -D_GNU_SOURCE -DPOISON_REVERSE=0 -g -O2"
 
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)

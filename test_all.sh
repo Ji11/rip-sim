@@ -185,23 +185,12 @@ pass "3.3 毒性反转测试完成"
 
 echo ""
 echo "--- 3.3(3) 有/无毒性逆转对比 ---"
-info "停止路由器，备份源码..."
+info "停止路由器，编译无毒性逆转版本..."
 cleanup
 sleep 1
 
-# 备份
-cp src/rip.c src/rip.c.bak
-cp src/tcp_mgmt.c src/tcp_mgmt.c.bak
-cp src/router.c src/router.c.bak
-
-# 注释掉三处毒性逆转
-sed -i 's/if (poison_reverse_idx >= 0 && e->from_neighbor == poison_reverse_idx) {/if (0 \&\& poison_reverse_idx >= 0 \&\& e->from_neighbor == poison_reverse_idx) {/' src/rip.c
-sed -i 's/int poisoned = rt_poison_from_neighbor(g_mgmt_rt, idx);/int poisoned = 0; \/\/* rt_poison_from_neighbor removed for test/' src/tcp_mgmt.c
-sed -i 's/int poisoned = rt_poison_from_neighbor(\&r->rt, idx);/int poisoned = 0; \/\/* rt_poison_from_neighbor removed for test/' src/router.c
-
-info "用无毒性逆转版本重新构建..."
-make clean > /dev/null 2>&1
-make > /dev/null 2>&1
+# 用 POISON_REVERSE=0 宏编译，无需修改源码
+make nopoison > /dev/null 2>&1
 
 ./ripd config/router1.conf 2>/dev/null &
 ./ripd config/router2.conf 2>/dev/null &
@@ -228,15 +217,12 @@ fi
 
 echo ""
 info "有毒性逆转 → link down 立即显示 16 [GC]"
-info "无毒性逆转 → link down 保持 2 (需等 180s 超时才能自动检测)"
+info "无毒性逆转 → link down 保持 2 (需等 180s 超时)  — 由 POISON_REVERSE=0 宏控制"
 
-# 恢复源码
-info "恢复源码..."
-mv src/rip.c.bak src/rip.c
-mv src/tcp_mgmt.c.bak src/tcp_mgmt.c
-mv src/router.c.bak src/router.c
-
-cleanup
+# 恢复为标准版本
+info "恢复标准版本..."
+make clean > /dev/null 2>&1
+make > /dev/null 2>&1
 sleep 1
 make clean > /dev/null 2>&1
 make > /dev/null 2>&1
