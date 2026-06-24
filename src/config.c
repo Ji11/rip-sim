@@ -4,38 +4,27 @@
 #include <libconfig.h>
 
 /*
- * 本文档中使用的 libconfig API 速查（详见 /usr/share/doc/libconfig-doc/html/）
+ * 网络课学了 libconfig，正好用上，比 fgets+sscanf 省事
  *
- * ┌──────────────────────────────┬──────────────────────────────────────┐
- * │ API                          │ 作用                                 │
- * ├──────────────────────────────┼──────────────────────────────────────┤
- * │ config_t cfg                 │ 配置对象，所有操作的句柄             │
- * │ config_init(&cfg)            │ 初始化配置对象，用完须 destroy       │
- * │ config_read_file(&cfg, path) │ 从文件读取配置，成功返回 CONFIG_TRUE │
- * │ config_error_file/line/text  │ 读取失败时获取错误文件/行号/描述     │
- * │ config_lookup_string         │ 从根读取字符串标量 (cfg, "key", &s)  │
- * │ config_lookup_int            │ 从根读取整数标量 (cfg, "key", &i)    │
- * │ config_lookup                │ 从根获取子节点 (cfg, "key")          │
- * │                             │ 返回 config_setting_t *，用于访问数组/列表/组 │
- * │ config_setting_length(s)     │ 获取数组/列表的长度                  │
- * │ config_setting_get_elem(s,i) │ 获取数组第 i 个元素（从 0 开始）     │
- * │ config_setting_lookup_string │ 从组节点读取字符串 (elem, "key", &s) │
- * │ config_setting_lookup_int    │ 从组节点读取整数 (elem, "key", &i)   │
- * │ config_destroy(&cfg)         │ 释放配置对象内存                     │
- * └──────────────────────────────┴──────────────────────────────────────┘
+ * 用到的几个函数：
+ *   config_init / config_read_file     — 初始化 + 读文件
+ *   config_lookup_string / _int        — 读字符串或整数
+ *   config_lookup                      — 拿数组/列表节点
+ *   config_setting_length / get_elem   — 遍历数组
+ *   config_setting_lookup_string / int — 从列表元素里再读字段
+ *   config_error_file / line / text    — 语法出错了打错误日志
+ *   config_destroy                     — 用完释放
  *
- * 对应配置文件结构（router1.cfg 为例）：
+ * 对应的 .cfg 大概这样：
  *
- *   id        = "1";                 → config_lookup_string("id")
- *   udp_port  = 5201;               → config_lookup_int("udp_port")
- *   tcp_port  = 8021;               → config_lookup_int("tcp_port")
- *
- *   neighbors = (                    → config_lookup("neighbors")
- *       { id="2"; address="..."; port=5202; },   → 数组元素 (group)
- *   );                               → config_setting_get_elem() 遍历
- *
- *   direct_networks = (                     → config_lookup("direct_networks")
- *       { address="10.0.1.0/24"; },  → 数组元素 (group)
+ *   id        = "1";
+ *   udp_port  = 5201;
+ *   tcp_port  = 8021;
+ *   neighbors = (
+ *       { id = "2";  address = "127.0.0.1";  port = 5202; }
+ *   );
+ *   direct_networks = (
+ *       { address = "10.0.1.0/24"; }
  *   );
  */
 
