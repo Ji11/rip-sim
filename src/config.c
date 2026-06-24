@@ -4,15 +4,12 @@
 #include <libconfig.h>
 
 /*
- *   config_init / config_read_file     — 初始化 + 读文件
- *   config_lookup_string / _int        — 读字符串或整数
- *   config_lookup                      — 拿数组/列表节点
- *   config_setting_length / get_elem   — 遍历数组
- *   config_setting_lookup_string / int — 从列表元素里再读字段
- *   config_error_file / line / text    — 语法出错了打错误日志
- *   config_destroy                     — 用完释放
+ *   config_lookup_string / _int        读字符串或整数
+ *   config_lookup                      读数组/列表节点
+ *   config_setting_length / get_elem   遍历数组
+ *   config_setting_lookup_string / int 从列表元素里再读字段
  *
- * 对应的 .cfg 和用到的 libconfig 函数：
+ * 对应的 .cfg：
  *
  *   id        = "1";                 → config_lookup_string("id")
  *   udp_port  = 5201;               → config_lookup_int("udp_port")

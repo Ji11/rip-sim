@@ -83,6 +83,7 @@ int router_bind(router *r)
     log_printf("router %s: UDP socket bound on port %d (%s)",
             r->id, r->udp_port, af == AF_INET6 ? "IPv6 dual-stack" : "IPv4");
 
+    // 启动 TCP 管理线程，传入路由表和邻居表指针，以及 UDP socket fd
     if (tcp_mgmt_start(r->tcp_port, &r->rt, &r->nt, r->udp_fd) < 0) {
         log_printf("ERROR: failed to start TCP management");
         close(r->udp_fd);

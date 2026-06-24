@@ -99,6 +99,21 @@ int rip_recv(int udp_fd, route_table *rt, neighborable *nt)
         return -1;
     }
 
+    // IPv6 双栈 socket 收 IPv4 包时，recvfrom 返回 ::ffff:127.0.0.1
+    // 转回纯 IPv4 sockaddr，否则 nt_find_by_addr 跟邻居表里的 127.0.0.1 对不上
+    if (from.ss_family == AF_INET6) {
+        struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)&from;
+        if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr)) {
+            struct sockaddr_in sin4;
+            memset(&sin4, 0, sizeof(sin4));
+            sin4.sin_family = AF_INET;
+            memcpy(&sin4.sin_addr, &sin6->sin6_addr.s6_addr[12], 4);
+            sin4.sin_port = sin6->sin6_port;
+            memcpy(&from, &sin4, sizeof(sin4));
+            from_len = sizeof(sin4);
+        }
+    }
+
     // 解析 RIP 报文头，识别命令类型（REQUEST/RESPONSE），并根据命令类型处理报文
     rip_header *hdr = (rip_header *)buf;
 

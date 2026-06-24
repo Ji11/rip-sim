@@ -182,7 +182,7 @@ static void *mgmt_server_thread(void *arg)
 
 // 启动 TCP 管理监听线程
 // 在独立线程中运行，rt 和 nt 与主线程共享（通过 rt->lock 保护）
-// 返回 0 成功，-1 失败
+// 在router_bind()中被调用
 int tcp_mgmt_start(int port, route_table *rt, neighborable *nt, int udp_fd)
 {
     // 拿到主线程传来的路由表和邻居表指针，以及 UDP socket fd，保存在全局变量中供管理线程使用
