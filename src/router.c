@@ -31,7 +31,7 @@ int router_bind(router *r)
     // 根据邻居地址族决定 socket 类型：有 IPv6 邻居则用双栈，否则纯 IPv4
     // 遍历邻居表检查是否有 IPv6 邻居，如果有则使用 AF_INET6 创建双栈 socket，否则使用 AF_INET 创建 IPv4 socket
     for (int i = 0; i < r->nt.count; i++) {
-        if (r->nt.entries[i].addr.ss_family == AF_INET6) {
+        if (r->nt.neighbors[i].addr.ss_family == AF_INET6) {
             use_v6 = 1;
             break;
         }
@@ -106,10 +106,10 @@ static void periodic_update(router *r)
     log_printf("periodic update, %d neighbors", r->nt.count);
 
     for (int i = 0; i < r->nt.count; i++) {
-        if (!r->nt.entries[i].active) continue;
+        if (!r->nt.neighbors[i].active) continue;
         rip_send_response(r->udp_fd,
-                         (const struct sockaddr *)&r->nt.entries[i].addr,
-                         r->nt.entries[i].addr_len, &r->rt, i);
+                         (const struct sockaddr *)&r->nt.neighbors[i].addr,
+                         r->nt.neighbors[i].addr_len, &r->rt, i);
     }
 }
 
@@ -119,10 +119,10 @@ static void triggered_update(router *r)
     log_printf("triggered update (route table changed)");
 
     for (int i = 0; i < r->nt.count; i++) {
-        if (!r->nt.entries[i].active) continue;
+        if (!r->nt.neighbors[i].active) continue;
         rip_send_response(r->udp_fd,
-                         (const struct sockaddr *)&r->nt.entries[i].addr,
-                         r->nt.entries[i].addr_len, &r->rt, i);
+                         (const struct sockaddr *)&r->nt.neighbors[i].addr,
+                         r->nt.neighbors[i].addr_len, &r->rt, i);
     }
 
     pthread_mutex_lock(&r->rt.lock);
@@ -139,7 +139,7 @@ static void check_neighborimeouts(router *r)
     for (int i = 0; i < count; i++) {
         int idx = indices[i];
         log_printf("neighbor %s timed out (180s no update)",
-                r->nt.entries[idx].id);
+                r->nt.neighbors[idx].id);
 
         nt_set_active(&r->nt, idx, 0);
 
@@ -149,7 +149,7 @@ static void check_neighborimeouts(router *r)
         int poisoned = 0;
 #endif
         log_printf("%d routes poisoned from timed-out neighbor %s",
-                poisoned, r->nt.entries[idx].id);
+                poisoned, r->nt.neighbors[idx].id);
     }
 
     free(indices);
@@ -163,15 +163,15 @@ int router_run(router *r)
     // 启动时发送初始路由表给所有邻居
     for (int i = 0; i < r->nt.count; i++) {
         rip_send_response(r->udp_fd,
-                         (const struct sockaddr *)&r->nt.entries[i].addr,
-                         r->nt.entries[i].addr_len, &r->rt, -1);
+                         (const struct sockaddr *)&r->nt.neighbors[i].addr,
+                         r->nt.neighbors[i].addr_len, &r->rt, -1);
     }
 
     // 同时发送 RIP 请求以主动拉取邻居的路由表
     for (int i = 0; i < r->nt.count; i++) {
         rip_send_request(r->udp_fd,
-                        (const struct sockaddr *)&r->nt.entries[i].addr,
-                        r->nt.entries[i].addr_len);
+                        (const struct sockaddr *)&r->nt.neighbors[i].addr,
+                        r->nt.neighbors[i].addr_len);
     }
 
     while (!r->shutdown) {

@@ -29,7 +29,7 @@ static void cmd_link_down(int fd, const char *neighbor_id)
         return;
     }
 
-    if (!g_mgmt_nt->entries[idx].active) {
+    if (!g_mgmt_nt->neighbors[idx].active) {
         dprintf(fd, "neighbor '%s' is already DOWN\n", neighbor_id);
         return;
     }
@@ -58,7 +58,7 @@ static void cmd_link_up(int fd, const char *neighbor_id, int udp_fd)
         return;
     }
 
-    if (g_mgmt_nt->entries[idx].active) {
+    if (g_mgmt_nt->neighbors[idx].active) {
         dprintf(fd, "neighbor '%s' is already UP\n", neighbor_id);
         return;
     }
@@ -67,8 +67,8 @@ static void cmd_link_up(int fd, const char *neighbor_id, int udp_fd)
 
     if (udp_fd >= 0) {
         rip_send_request(udp_fd,
-                        (const struct sockaddr *)&g_mgmt_nt->entries[idx].addr,
-                        g_mgmt_nt->entries[idx].addr_len);
+                        (const struct sockaddr *)&g_mgmt_nt->neighbors[idx].addr,
+                        g_mgmt_nt->neighbors[idx].addr_len);
     }
 
     dprintf(fd, "OK: link UP to neighbor '%s', RIP request sent\n", neighbor_id);

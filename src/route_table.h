@@ -24,7 +24,7 @@ typedef struct {
 
 // 路由表（线程安全，带互斥锁）
 typedef struct {
-    route entries[MAX_ROUTES]; // 路由条目数组 每个路由器最多 256 条路由
+    route routes[MAX_ROUTES]; // 路由条目数组 每个路由器最多 256 条路由
     int           count;
     int           changed;       // 路由表变更标志，触发更新用
     pthread_mutex_t lock;

@@ -14,7 +14,7 @@ int nt_add(neighborable *nt, const char *id, const struct sockaddr *addr, sockle
     }
 
     // 在邻居表中添加新邻居，复制 id，addr，addr_len，设置 active=1，last_recv=当前时间
-    neighbor *n = &nt->entries[nt->count];
+    neighbor *n = &nt->neighbors[nt->count];
     strncpy(n->id, id, sizeof(n->id) - 1);
     n->id[sizeof(n->id) - 1] = '\0';
     memcpy(&n->addr, addr, addr_len);
@@ -32,7 +32,7 @@ int nt_add(neighborable *nt, const char *id, const struct sockaddr *addr, sockle
 int nt_find_by_id(const neighborable *nt, const char *id)
 {
     for (int i = 0; i < nt->count; i++) {
-        if (strcmp(nt->entries[i].id, id) == 0) {
+        if (strcmp(nt->neighbors[i].id, id) == 0) {
             return i;
         }
     }
@@ -43,7 +43,7 @@ int nt_find_by_id(const neighborable *nt, const char *id)
 int nt_find_by_addr(const neighborable *nt, const struct sockaddr *addr)
 {
     for (int i = 0; i < nt->count; i++) {
-        if (sockaddr_eq((const struct sockaddr *)&nt->entries[i].addr, addr)) {
+        if (sockaddr_eq((const struct sockaddr *)&nt->neighbors[i].addr, addr)) {
             return i;
         }
     }
@@ -54,18 +54,19 @@ void nt_set_active(neighborable *nt, int idx, int active)
 {
     if (idx < 0 || idx >= nt->count) return;
 
-    nt->entries[idx].active = active;
+    nt->neighbors[idx].active = active;
     if (active) {
         // 重新激活时重置收包计时器，避免立即触发超时
-        nt->entries[idx].last_recv = time(NULL);
+        nt->neighbors[idx].last_recv = time(NULL);
     }
-    log_printf("neighbor %s link %s", nt->entries[idx].id, active ? "UP" : "DOWN");
+    log_printf("neighbor %s link %s", nt->neighbors[idx].id, active ? "UP" : "DOWN");
 }
 
-void nt_touch(neighborable *nt, int idx)
+// 更新最近收包时间戳
+void nt_update_last_recv(neighborable *nt, int idx)
 {
     if (idx < 0 || idx >= nt->count) return;
-    nt->entries[idx].last_recv = time(NULL);
+    nt->neighbors[idx].last_recv = time(NULL);
 }
 
 int *nt_check_timeouts(const neighborable *nt, int *count_out)
@@ -75,8 +76,8 @@ int *nt_check_timeouts(const neighborable *nt, int *count_out)
     time_t now = time(NULL);
 
     for (int i = 0; i < nt->count; i++) {
-        if (nt->entries[i].active &&
-            (now - nt->entries[i].last_recv) > RIP_NEIGHBOR_SEC) {
+        if (nt->neighbors[i].active &&
+            (now - nt->neighbors[i].last_recv) > RIP_NEIGHBOR_SEC) {
             int *tmp = realloc(result, (count + 1) * sizeof(int));
             if (!tmp) {
                 free(result);
@@ -110,7 +111,7 @@ void nt_show(const neighborable *nt, int fd)
                "----------\n");
 
     for (int i = 0; i < nt->count; i++) {
-        const neighbor *n = &nt->entries[i];
+        const neighbor *n = &nt->neighbors[i];
         dprintf(fd, "%-8s %-22s %-6s %s\n",
                 n->id,
                 sockaddr_str((const struct sockaddr *)&n->addr,

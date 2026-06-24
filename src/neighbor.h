@@ -18,7 +18,7 @@ typedef struct {
 
 // 邻居表
 typedef struct {
-    neighbor entries[MAX_NEIGHBORS];
+    neighbor neighbors[MAX_NEIGHBORS];
     int        count;
 } neighborable;
 
@@ -39,7 +39,7 @@ int  nt_find_by_addr(const neighborable *nt, const struct sockaddr *addr);
 void nt_set_active(neighborable *nt, int idx, int active);
 
 // 更新最近收包时间戳
-void nt_touch(neighborable *nt, int idx);
+void nt_update_last_recv(neighborable *nt, int idx);
 
 //  超时检测 
 // 返回超过 180 秒未收到更新的邻居索引数组（调用者负责 free）
