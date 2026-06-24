@@ -29,13 +29,13 @@ make > /dev/null 2>&1
 # ── 3.1 启动 3 台路由器 ─────────────────────────────
 echo ""
 echo "============================================"
-echo "  3.1 测试环境：启动 3 台路由器 (mesh 拓扑)"
+echo "  3.1 测试环境：启动 3 台路由器 (链状拓扑 R1—R2—R3)"
 echo "============================================"
 ./ripd config/router1.conf 2>/tmp/r1.log &
 ./ripd config/router2.conf 2>/tmp/r2.log &
 ./ripd config/router3.conf 2>/tmp/r3.log &
 info "路由器已启动: R1(tcp:8021) R2(tcp:8022) R3(tcp:8023)"
-info "拓扑: R1---R2---R3---R1 (全网状)"
+info "拓扑: R1---R2---R3 (链状)"
 pass "3.1 路由器进程全部启动"
 
 # ── 等待收敛 ────────────────────────────────────────
@@ -83,10 +83,10 @@ echo ""
 echo "--- show neighbors ---"
 output=$(echo "show neighbors" | timeout 3 nc 127.0.0.1 8021 2>/dev/null)
 echo "$output"
-if echo "$output" | grep -q "Total: 2 neighbors"; then
-    pass "show neighbors: 显示 2 个邻居"
+if echo "$output" | grep -q "Total: 1 neighbors"; then
+    pass "show neighbors: 显示 1 个邻居 (链状 R1 仅连 R2)"
 else
-    fail "show neighbors: 未显示 2 个邻居"
+    fail "show neighbors: 未显示 1 个邻居"
 fi
 
 echo ""
@@ -164,11 +164,11 @@ else
 fi
 
 echo ""
-echo "--- Router 3 路由表 (10.0.1.0 应能从 R1 学到或通过 R2) ---"
+echo "--- Router 3 路由表 (链状下 R3 只能通过 R2 中继到达 R1) ---"
 output=$(echo "show route" | timeout 3 nc 127.0.0.1 8023 2>/dev/null)
 echo "$output"
 if echo "$output" | grep -q "10.0.1.0"; then
-    pass "R3: 能看到 10.0.1.0/24"
+    pass "R3: 能看到 10.0.1.0/24 (经由 R2 中继)"
 else
     fail "R3: 看不到 10.0.1.0/24"
 fi
