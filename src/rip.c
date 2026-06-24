@@ -5,6 +5,8 @@
 #define RIP_HEADER_SIZE  4   // 头部：command(1) + version(1) + reserved(2)
 #define RIP_ENTRY_SIZE   22  // 每条路由：af(2) + addr(16) + prefix_len(1) + reserved(1) + metric(2)
 
+// 构造并发送 RIP 响应到指定邻居
+// poison_reverse_idx >= 0 时：将从该邻居学到的路由毒性化
 int rip_send_response(int udp_fd, const struct sockaddr *dst,
                       socklen_t dst_len, route_table *rt,
                       int poison_reverse_idx)

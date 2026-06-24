@@ -41,10 +41,6 @@ void nt_set_active(neighborable *nt, int idx, int active);
 // 更新最近收包时间戳
 void nt_update_last_recv(neighborable *nt, int idx);
 
-//  超时检测 
-// 返回超过 180 秒未收到更新的邻居索引数组（调用者负责 free）
-int *nt_check_timeouts(const neighborable *nt, int *count_out);
-
 // 显示邻居表（直接写入文件描述符）
 void nt_show(const neighborable *nt, int fd);
 

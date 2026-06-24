@@ -22,11 +22,11 @@ typedef struct {
     time_t      last_updated;    // 最近一次更新时间
 } route;
 
-// 路由表（线程安全，带互斥锁）
+// 路由表
 typedef struct {
     route routes[MAX_ROUTES]; // 路由条目数组 每个路由器最多 256 条路由
-    int           count;
-    int           changed;       // 路由表变更标志，触发更新用
+    int           count; // 路由条目数
+    int           changed; // 路由表变更标志，触发更新用
     pthread_mutex_t lock;
 } route_table;
 
@@ -50,7 +50,7 @@ int  rt_poison_from_neighbor(route_table *rt, int nbr_idx);
 // 垃圾回收：删除 metric==16 且超过 120 秒的条目
 int  rt_garbage_collect(route_table *rt);
 
-// 显示路由表（直接写入文件描述符）
+// 显示路由表 直接写入文件描述符
 void rt_show(route_table *rt, int fd);
 
 #endif // ROUTE_TABLE_H

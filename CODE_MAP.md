@@ -58,7 +58,7 @@
 |------------|----------|
 | **方式一：180 秒超时检测（标准 RIP）** | |
 | 记录每个邻居最后一次收到更新的时间 | `src/neighbor.c` → `nt_update_last_recv()`, 更新 `last_recv` 字段 |
-| 180 秒未收到更新 → 判定失效 | `src/neighbor.c` → `nt_check_timeouts()`, 遍历邻居比较 `now - last_recv > 180` |
+| 180 秒未收到更新 → 判定失效 | `src/router.c` → `check_neighbor_timeouts()`, 遍历邻居比较 `now - last_recv > 180` |
 | 失效后执行毒性逆转（功能 5） | `src/router.c` → `check_neighbor_timeouts()`, 调用 `rt_poison_from_neighbor()` |
 | **方式二：手动链路控制（快速测试）** | |
 | `link down <neighbor_id>` 命令 | `src/tcp_mgmt.c` → `cmd_link_down()`, 调 `nt_set_active(idx, 0)`, 调 `rt_poison_from_neighbor()` |

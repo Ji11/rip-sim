@@ -96,7 +96,7 @@ int router_bind(router *r)
     return 0;
 }
 
-// 每 30 秒周期性更新，使用 select 的超时机制实现
+// 每 30 秒周期性更新，在 router_run 使用 select 的超时机制实现
 static void periodic_update(router *r)
 {
     time_t now = time(NULL);
@@ -133,29 +133,27 @@ static void triggered_update(router *r)
     pthread_mutex_unlock(&r->rt.lock);
 }
 
-// 邻居超时检测
+// 邻居超时检测：遍历邻居表，将超时的标记 DOWN 并毒化路由
 static void check_neighbor_timeouts(router *r)
 {
-    int count = 0;
-    int *indices = nt_check_timeouts(&r->nt, &count);
+    time_t now = time(NULL);
 
-    for (int i = 0; i < count; i++) {
-        int idx = indices[i];
-        log_printf("neighbor %s timed out (180s no update)",
-                r->nt.neighbors[idx].id);
+    // 遍历邻居表，检查每个邻居的 last_recv，如果超过 180 秒没有收到更新，则该邻居超时
+    // 然后将其标记为 DOWN，并调用 rt_poison_from_neighbor 毒化从该邻居学到的路由
+    for (int i = 0; i < r->nt.count; i++) {
+        if (!r->nt.neighbors[i].active) continue;
+        if ((now - r->nt.neighbors[i].last_recv) <= RIP_NEIGHBOR_SEC) continue; // 180 秒内有收到更新，说明邻居活跃
 
-        nt_set_active(&r->nt, idx, 0);
+        log_printf("neighbor %s timed out (180s no update)", r->nt.neighbors[i].id);
+        nt_set_active(&r->nt, i, 0); // 标记邻居为 DOWN
 
 #if POISON_REVERSE
-        int poisoned = rt_poison_from_neighbor(&r->rt, idx);
+        int poisoned = rt_poison_from_neighbor(&r->rt, i);
 #else
         int poisoned = 0;
 #endif
-        log_printf("%d routes poisoned from timed-out neighbor %s",
-                poisoned, r->nt.neighbors[idx].id);
+        log_printf("%d routes poisoned from timed-out neighbor %s", poisoned, r->nt.neighbors[i].id);
     }
-
-    free(indices);
 }
 
 // 主事件循环 select

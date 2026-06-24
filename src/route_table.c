@@ -119,14 +119,17 @@ int rt_upsert(route_table *rt, int af, const uint8_t *dest,
     return 0;
 }
 
+// 将从指定邻居学到的所有路由标记为 metric=16，进入垃圾回收
 int rt_poison_from_neighbor(route_table *rt, int nbr_idx)
 {
-    int poisoned = 0;
+    int poisoned = 0; // 统计被毒化的路由条目数
 
+    // 有关 changed 操作，需要加锁，因为：
+    // 1. 主线程 rt_upsert() 可能修改路由表，把 rt->changed 置 1
+    // 2. TCP 管理线程也会通过 link down → rt_poison_from_neighbor 间接写 rt->changed
     pthread_mutex_lock(&rt->lock);
     for (int i = 0; i < rt->count; i++) {
-        if (rt->routes[i].from_neighbor == nbr_idx &&
-            rt->routes[i].metric < RIP_INFINITY) {
+        if (rt->routes[i].from_neighbor == nbr_idx && rt->routes[i].metric < RIP_INFINITY) {
             rt->routes[i].metric = RIP_INFINITY;
             rt->routes[i].last_updated = time(NULL);
             rt->changed = 1;
@@ -138,6 +141,7 @@ int rt_poison_from_neighbor(route_table *rt, int nbr_idx)
     return poisoned;
 }
 
+// 垃圾回收：删除 metric==16 且超过 120 秒的条目
 int rt_garbage_collect(route_table *rt)
 {
     int removed = 0;
@@ -148,10 +152,10 @@ int rt_garbage_collect(route_table *rt)
     for (int i = rt->count - 1; i >= 0; i--) {
         if (rt->routes[i].metric == RIP_INFINITY) {
             if (now - rt->routes[i].last_updated >= RIP_GARBAGE_SEC) {
-                // 删除该条目
+                // 如果不是最后一条路由，使用 memmove 将后续路由前移覆盖当前路由
                 if (i < rt->count - 1) {
-                    memmove(&rt->routes[i], &rt->routes[i + 1],
-                            (rt->count - i - 1) * sizeof(route));
+                    // 移动 (rt->count - i - 1) 条，即从 i+1 到 count-1 的路由条目，每条 sizeof(route) bytes
+                    memmove(&rt->routes[i], &rt->routes[i + 1], (rt->count - i - 1) * sizeof(route));
                 }
                 rt->count--;
                 removed++;

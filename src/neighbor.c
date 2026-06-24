@@ -1,5 +1,4 @@
 #include "neighbor.h"
-#include <stdlib.h>
 
 void nt_init(neighborable *nt)
 {
@@ -50,6 +49,7 @@ int nt_find_by_addr(const neighborable *nt, const struct sockaddr *addr)
     return -1;
 }
 
+// 设置链路状态
 void nt_set_active(neighborable *nt, int idx, int active)
 {
     if (idx < 0 || idx >= nt->count) return;
@@ -67,30 +67,6 @@ void nt_update_last_recv(neighborable *nt, int idx)
 {
     if (idx < 0 || idx >= nt->count) return;
     nt->neighbors[idx].last_recv = time(NULL);
-}
-
-int *nt_check_timeouts(const neighborable *nt, int *count_out)
-{
-    int *result = NULL;
-    int count = 0;
-    time_t now = time(NULL);
-
-    for (int i = 0; i < nt->count; i++) {
-        if (nt->neighbors[i].active &&
-            (now - nt->neighbors[i].last_recv) > RIP_NEIGHBOR_SEC) {
-            int *tmp = realloc(result, (count + 1) * sizeof(int));
-            if (!tmp) {
-                free(result);
-                *count_out = 0;
-                return NULL;
-            }
-            result = tmp;
-            result[count++] = i;
-        }
-    }
-
-    *count_out = count;
-    return result;
 }
 
 void nt_show(const neighborable *nt, int fd)
