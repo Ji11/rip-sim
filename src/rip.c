@@ -132,7 +132,7 @@ int rip_recv(int udp_fd, route_table *rt, neighborable *nt)
     // hdr->command == RIP_CMD_RESPONSE
     // 处理响应报文
     int offset = RIP_HEADER_SIZE;
-    int nentries = 0;
+    int n_routes = 0;
     int changes = 0;
 
     // 逐条解析 RIP 路由条目，调用 rt_upsert() 更新路由表
@@ -154,6 +154,7 @@ int rip_recv(int udp_fd, route_table *rt, neighborable *nt)
         int prefix_len = rip_rte->prefix_len;
         int metric = ntohs(rip_rte->metric);
 
+        // 更新路由表
         if (nbr_idx >= 0) {
             // Bellman-Ford：经邻居到达目标的度量 = 邻居通告的度量 + 1
             int new_metric = metric + 1;
@@ -164,7 +165,7 @@ int rip_recv(int udp_fd, route_table *rt, neighborable *nt)
             memset(next_hop, 0, 16);
             if (af == AF_INET) {
                 const struct sockaddr_in *sin = (const struct sockaddr_in *)&from;
-                memcpy(next_hop, &sin->sin_addr, 4);
+                memcpy(next_hop, &sin->sin_addr, 4); // memcopy 直接搬二进制
             } else {
                 const struct sockaddr_in6 *sin6 = (const struct sockaddr_in6 *)&from;
                 memcpy(next_hop, &sin6->sin6_addr, 16);
@@ -175,18 +176,18 @@ int rip_recv(int udp_fd, route_table *rt, neighborable *nt)
             if (changed) changes++;
         }
 
-        nentries++;
+        n_routes++;
         offset += RIP_ENTRY_SIZE;
     }
 
-    log_printf("received RESPONSE from %s: %d entries, %d changes",
+    log_printf("received RESPONSE from %s: %d routes, %d changes",
             sockaddr_str((const struct sockaddr *)&from, peer, sizeof(peer)),
-            nentries, changes);
+            n_routes, changes);
 
     // 更新邻居最后收包时间
     if (nbr_idx >= 0) {
         nt_update_last_recv(nt, nbr_idx);
     }
 
-    return nentries;
+    return n_routes;
 }

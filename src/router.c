@@ -131,7 +131,7 @@ static void triggered_update(router *r)
 }
 
 // 邻居超时检测
-static void check_neighborimeouts(router *r)
+static void check_neighbor_timeouts(router *r)
 {
     int count = 0;
     int *indices = nt_check_timeouts(&r->nt, &count);
@@ -192,21 +192,28 @@ int router_run(router *r)
             break;
         }
 
+        // 如果 UDP socket FD ISSET，说明有 RIP 报文到达，调用 rip_recv() 处理
         if (FD_ISSET(r->udp_fd, &readfds)) {
             rip_recv(r->udp_fd, &r->rt, &r->nt);
 
+            // changed 需要加锁，因为：
+            // 主线程 rt_upsert() 可能修改路由表，把 rt->changed 置 1
+            // TCP 管理线程也会通过 link down → rt_poison_from_neighbor 间接写 rt->changed
             pthread_mutex_lock(&r->rt.lock);
             int changed = r->rt.changed;
             pthread_mutex_unlock(&r->rt.lock);
 
+            // 如果路由表发生变化，立即触发更新
             if (changed) {
                 triggered_update(r);
             }
         }
 
+        // 周期性更新和邻居超时检测
         periodic_update(r);
-        check_neighborimeouts(r);
+        check_neighbor_timeouts(r);
 
+        // 垃圾回收过期路由
         int collected = rt_garbage_collect(&r->rt);
         if (collected > 0) {
             log_printf("garbage collected %d routes", collected);

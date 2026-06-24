@@ -34,6 +34,8 @@ int rt_find(const route_table *rt, int af, const uint8_t *dest, int prefix_len)
 //   4. 来自不同邻居、度量更优：替换
 
 // 添加或更新路由。返回 1 表示新增/修改，0 表示无变化
+// 调用点: config.c 启动注册直连路由, from_neighbor=-1
+//         rip.c 收到邻居RESPONSE, from_neighbor=nbr_idx
 int rt_upsert(route_table *rt, int af, const uint8_t *dest,
               int prefix_len, const uint8_t *next_hop, int metric,
               int from_neighbor)
