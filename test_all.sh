@@ -183,6 +183,65 @@ echo "--- 恢复: Router 1 link up 2 ---"
 echo "link up 2" | timeout 3 nc 127.0.0.1 8021 2>/dev/null
 pass "3.3 毒性反转测试完成"
 
+echo ""
+echo "--- 3.3(3) 有/无毒性逆转对比 ---"
+info "停止路由器，备份源码..."
+cleanup
+sleep 1
+
+# 备份
+cp src/rip.c src/rip.c.bak
+cp src/tcp_mgmt.c src/tcp_mgmt.c.bak
+cp src/router.c src/router.c.bak
+
+# 注释掉三处毒性逆转
+sed -i 's/if (poison_reverse_idx >= 0 && e->from_neighbor == poison_reverse_idx) {/if (0 \&\& poison_reverse_idx >= 0 \&\& e->from_neighbor == poison_reverse_idx) {/' src/rip.c
+sed -i 's/int poisoned = rt_poison_from_neighbor(g_mgmt_rt, idx);/int poisoned = 0; \/\/* rt_poison_from_neighbor removed for test/' src/tcp_mgmt.c
+sed -i 's/int poisoned = rt_poison_from_neighbor(\&r->rt, idx);/int poisoned = 0; \/\/* rt_poison_from_neighbor removed for test/' src/router.c
+
+info "用无毒性逆转版本重新构建..."
+make clean > /dev/null 2>&1
+make > /dev/null 2>&1
+
+./ripd config/router1.conf 2>/dev/null &
+./ripd config/router2.conf 2>/dev/null &
+./ripd config/router3.conf 2>/dev/null &
+sleep 35
+
+echo ""
+echo "--- R1 初始路由表 (无毒性逆转) ---"
+echo "show route" | timeout 3 nc 127.0.0.1 8021 2>/dev/null
+
+echo ""
+echo "--- link down 2 (无毒性逆转) ---"
+echo "link down 2" | timeout 3 nc 127.0.0.1 8021 2>/dev/null
+
+echo ""
+echo "--- R1 路由表 (无毒性逆转: 10.0.2.0/24 应保持 metric=2) ---"
+output=$(echo "show route" | timeout 3 nc 127.0.0.1 8021 2>/dev/null)
+echo "$output"
+if echo "$output" | grep -qE "10\.0\.2\.0.*2\b"; then
+    pass "无毒性逆转: 10.0.2.0/24 保持 metric=2 (不会立即毒化)"
+else
+    fail "无毒性逆转: 10.0.2.0/24 非预期变化"
+fi
+
+echo ""
+info "有毒性逆转 → link down 立即显示 16 [GC]"
+info "无毒性逆转 → link down 保持 2 (需等 180s 超时才能自动检测)"
+
+# 恢复源码
+info "恢复源码..."
+mv src/rip.c.bak src/rip.c
+mv src/tcp_mgmt.c.bak src/tcp_mgmt.c
+mv src/router.c.bak src/router.c
+
+cleanup
+sleep 1
+make clean > /dev/null 2>&1
+make > /dev/null 2>&1
+pass "3.3(3) 对比测试完成，源码已恢复"
+
 # ── 3.4 邻居失效自动检测 ────────────────────────────
 echo ""
 echo "============================================"
