@@ -31,64 +31,64 @@
 
 // 路由条目
 typedef struct {
- int af;
- uint8_t dest[16];
- int prefix_len;
- uint8_t next_hop[16];
- int metric;
- int from_neighbor;
- time_t last_updated;
+	int af;
+	uint8_t dest[16];
+	int prefix_len;
+	uint8_t next_hop[16];
+	int metric;
+	int from_neighbor;
+	time_t last_updated;
 } route;
 
 // 路由表
 typedef struct {
- route routes[MAX_ROUTES];
- int count;
- int changed;
- pthread_mutex_t lock;
+	route routes[MAX_ROUTES];
+	int count;
+	int changed;
+	pthread_mutex_t lock;
 } route_table;
 
 // 邻居条目
 typedef struct {
- char id[32];
- struct sockaddr_storage addr;
- socklen_t addr_len;
- int active;
- time_t last_recv;
+	char id[32];
+	struct sockaddr_storage addr;
+	socklen_t addr_len;
+	int active;
+	time_t last_recv;
 } neighbor;
 
 // 邻居表
 typedef struct {
- neighbor neighbors[MAX_NEIGHBORS];
- int count;
+	neighbor neighbors[MAX_NEIGHBORS];
+	int count;
 } neighbor_table;
 
 // 路由器
 typedef struct {
- char id[32];
- int udp_port;
- int tcp_port;
- int udp_fd;
- route_table rt;
- neighbor_table nt;
- time_t last_periodic;
- volatile int shutdown;
+	char id[32];
+	int udp_port;
+	int tcp_port;
+	int udp_fd;
+	route_table rt;
+	neighbor_table nt;
+	time_t last_periodic;
+	volatile int shutdown;
 } router;
 
 // RIP 报文头
 typedef struct {
- uint8_t command;
- uint8_t version;
- uint16_t reserved;
+	uint8_t command;
+	uint8_t version;
+	uint16_t reserved;
 } rip_header;
 
 // RIP 路由条目（22 bytes）
 typedef struct {
- uint16_t af;
- uint8_t addr[16];
- uint8_t prefix_len;
- uint8_t reserved;
- uint16_t metric;
+	uint16_t af;
+	uint8_t addr[16];
+	uint8_t prefix_len;
+	uint8_t reserved;
+	uint16_t metric;
 } rip_route;
 
 // 函数声明
@@ -117,7 +117,7 @@ void router_shutdown(router *r);
 void rt_init(route_table *rt);
 void rt_destroy(route_table *rt);
 int rt_upsert(route_table *rt, int af, const uint8_t *dest, int prefix_len,
-  const uint8_t *next_hop, int metric, int from_neighbor);
+	const uint8_t *next_hop, int metric, int from_neighbor);
 int rt_find(const route_table *rt, int af, const uint8_t *dest, int prefix_len);
 int rt_poison_from_neighbor(route_table *rt, int nbr_idx);
 int rt_garbage_collect(route_table *rt);
@@ -134,7 +134,7 @@ void nt_show(const neighbor_table *nt, int fd);
 
 // rip.c
 int rip_send_response(int udp_fd, const struct sockaddr *dst, socklen_t dst_len,
-  route_table *rt, int poison_reverse_idx);
+	route_table *rt, int poison_reverse_idx);
 int rip_send_request(int udp_fd, const struct sockaddr *dst, socklen_t dst_len);
 int rip_recv(int udp_fd, route_table *rt, neighbor_table *nt);
 
