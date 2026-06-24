@@ -81,9 +81,11 @@ int rt_upsert(route_table_t *rt, int af, const uint8_t *dest,
         return 0;
     }
 
-    // 规则 2：同一下一跳、同一度量 只需刷新时间戳
+    // 规则 2：同一下一跳、同一度量、同一来源 只需刷新时间戳
+    // 必须验证 from_neighbor 相同，否则多邻居共用同一 IP（如 127.0.0.1）
+    // 时，邻居 B 发来的同度量更新会错误重置邻居 A 路由的 GC 计时器
     int same_nh = (memcmp(e->next_hop, next_hop, (af == AF_INET) ? 4 : 16) == 0);
-    if (same_nh && e->metric == metric) {
+    if (same_nh && e->metric == metric && e->from_neighbor == from_neighbor) {
         e->last_updated = time(NULL);
         pthread_mutex_unlock(&rt->lock);
         return 0;
