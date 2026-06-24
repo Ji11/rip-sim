@@ -16,8 +16,8 @@
 ## 构建
 
 ```bash
-# 安装编译工具（如未安装）
-sudo apt install build-essential
+# 安装编译依赖（如未安装）
+sudo apt install build-essential libconfig-dev
 
 # 编译
 cd rip-sim
@@ -59,23 +59,26 @@ nc 127.0.0.1 8021
 | `link up <id>` | 恢复指定邻居链路 |
 | `quit` | 退出连接 |
 
-## 配置文件格式
+## 配置文件格式（libconfig）
 
-```
-# 路由器 ID
-id 1
-# UDP 端口（RIP 协议）
-udp_port 5201
-# TCP 端口（管理接口）
-tcp_port 8021
-# 邻居定义：<id> <地址> <UDP端口>
-neighbor 2 127.0.0.1 5202
-neighbor 3 127.0.0.1 5203
+```ini
+# 路由器基本信息
+id        = "1";
+udp_port  = 5201;
+tcp_port  = 8021;
+
+# 邻居列表（链状拓扑 R1 只连 R2）
+neighbors = (
+    { id = "2";  address = "127.0.0.1";  port = 5202; }
+);
+
 # 直连网络
-network 10.0.1.0/24
+networks = (
+    { address = "10.0.1.0/24"; }
+);
 ```
 
-支持 IPv4 和 IPv6 地址。
+支持 IPv4 和 IPv6 地址，邻居 `address` 可以是 IP 或主机名（如 `router2.local`）。
 
 ## 测试拓扑
 
