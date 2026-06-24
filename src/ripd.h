@@ -12,7 +12,6 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 
-// 协议常量
 #define RIP_VERSION        1
 #define RIP_CMD_REQUEST     1
 #define RIP_CMD_RESPONSE    2
@@ -28,8 +27,6 @@
 
 #define MAX_ROUTES          256
 #define MAX_NEIGHBORS       16
-
-// 数据结构
 
 // 路由条目
 typedef struct {
@@ -63,7 +60,7 @@ typedef struct {
 typedef struct {
     neighbor    neighbors[MAX_NEIGHBORS];
     int         count;
-} neighborable;
+} neighbor_table;
 
 // 路由器状态
 typedef struct {
@@ -73,7 +70,7 @@ typedef struct {
     int             udp_fd;
 
     route_table     rt;
-    neighborable    nt;
+    neighbor_table    nt;
 
     time_t          last_periodic;
     volatile int    shutdown;
@@ -128,22 +125,22 @@ int  rt_garbage_collect(route_table *rt);
 void rt_show(route_table *rt, int fd);
 
 // neighbor.c
-void nt_init(neighborable *nt);
-int  nt_add(neighborable *nt, const char *id, const struct sockaddr *addr, socklen_t addr_len);
-int  nt_find_by_id(const neighborable *nt, const char *id);
-int  nt_find_by_addr(const neighborable *nt, const struct sockaddr *addr);
-void nt_set_active(neighborable *nt, int idx, int active);
-void nt_update_last_recv(neighborable *nt, int idx);
-void nt_show(const neighborable *nt, int fd);
+void nt_init(neighbor_table *nt);
+int  nt_add(neighbor_table *nt, const char *id, const struct sockaddr *addr, socklen_t addr_len);
+int  nt_find_by_id(const neighbor_table *nt, const char *id);
+int  nt_find_by_addr(const neighbor_table *nt, const struct sockaddr *addr);
+void nt_set_active(neighbor_table *nt, int idx, int active);
+void nt_update_last_recv(neighbor_table *nt, int idx);
+void nt_show(const neighbor_table *nt, int fd);
 
 // rip.c
 int rip_send_response(int udp_fd, const struct sockaddr *dst, socklen_t dst_len,
                       route_table *rt, int poison_reverse_idx);
 int rip_send_request(int udp_fd, const struct sockaddr *dst, socklen_t dst_len);
-int rip_recv(int udp_fd, route_table *rt, neighborable *nt);
+int rip_recv(int udp_fd, route_table *rt, neighbor_table *nt);
 
 // tcp_mgmt.c
-int  tcp_mgmt_start(int port, route_table *rt, neighborable *nt, int udp_fd);
+int  tcp_mgmt_start(int port, route_table *rt, neighbor_table *nt, int udp_fd);
 void tcp_mgmt_stop(void);
 
 #endif // RIPD_H

@@ -1,11 +1,11 @@
 #include "ripd.h"
 
-void nt_init(neighborable *nt)
+void nt_init(neighbor_table *nt)
 {
     memset(nt, 0, sizeof(*nt));
 }
 
-int nt_add(neighborable *nt, const char *id, const struct sockaddr *addr, socklen_t addr_len)
+int nt_add(neighbor_table *nt, const char *id, const struct sockaddr *addr, socklen_t addr_len)
 {
     if (nt->count >= MAX_NEIGHBORS) {
         log_printf("neighbor table full");
@@ -28,7 +28,7 @@ int nt_add(neighborable *nt, const char *id, const struct sockaddr *addr, sockle
     return nt->count++;
 }
 
-int nt_find_by_id(const neighborable *nt, const char *id)
+int nt_find_by_id(const neighbor_table *nt, const char *id)
 {
     for (int i = 0; i < nt->count; i++) {
         if (strcmp(nt->neighbors[i].id, id) == 0) {
@@ -39,7 +39,7 @@ int nt_find_by_id(const neighborable *nt, const char *id)
 }
 
 // 根据 sockaddr 查找邻居索引，返回索引或-1
-int nt_find_by_addr(const neighborable *nt, const struct sockaddr *addr)
+int nt_find_by_addr(const neighbor_table *nt, const struct sockaddr *addr)
 {
     for (int i = 0; i < nt->count; i++) {
         if (sockaddr_eq((const struct sockaddr *)&nt->neighbors[i].addr, addr)) {
@@ -50,7 +50,7 @@ int nt_find_by_addr(const neighborable *nt, const struct sockaddr *addr)
 }
 
 // 设置链路状态
-void nt_set_active(neighborable *nt, int idx, int active)
+void nt_set_active(neighbor_table *nt, int idx, int active)
 {
     if (idx < 0 || idx >= nt->count) return;
 
@@ -63,13 +63,13 @@ void nt_set_active(neighborable *nt, int idx, int active)
 }
 
 // 更新最近收包时间戳
-void nt_update_last_recv(neighborable *nt, int idx)
+void nt_update_last_recv(neighbor_table *nt, int idx)
 {
     if (idx < 0 || idx >= nt->count) return;
     nt->neighbors[idx].last_recv = time(NULL);
 }
 
-void nt_show(const neighborable *nt, int fd)
+void nt_show(const neighbor_table *nt, int fd)
 {
     char addr_buf[64];
     char time_buf[32];

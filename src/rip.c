@@ -80,7 +80,7 @@ int rip_send_request(int udp_fd, const struct sockaddr *dst, socklen_t dst_len)
     return 0;
 }
 
-int rip_recv(int udp_fd, route_table *rt, neighborable *nt)
+int rip_recv(int udp_fd, route_table *rt, neighbor_table *nt)
 {
     uint8_t buf[4096];
     // 用 sockaddr_storage 来接收 IPv4 or IPv6 地址
