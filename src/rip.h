@@ -15,7 +15,7 @@
 
 // 以下两个结构体是用 reserved 字段对齐的，否则还需要 __attribute__((packed))
 // rip_header_t: command(1) + version(1) + reserved(2) = 4 bytes
-// rip_entry_t:  af(2) + tag(2) + addr(16) + prefix_len(1) + reserved(1) + metric(2) = 24 bytes
+// rip_entry_t:  af(2) + addr(16) + prefix_len(1) + reserved(1) + metric(2) = 22 bytes
 
 // RIP 报文头
 typedef struct {
@@ -24,10 +24,9 @@ typedef struct {
     uint16_t reserved;      // 保留字段
 } rip_header_t;
 
-// RIP 路由条目（24 bytes）
+// RIP 路由条目（22 bytes）
 typedef struct {
     uint16_t af;            // 地址族：AF_INET=2, AF_INET6=10 跟 <sys/socket.h> 常量相同
-    uint16_t tag;           // 路由标记，未使用
     uint8_t  addr[16];      // 目标地址（IPv4 用前 4 bytes）
     uint8_t  prefix_len;    // 前缀长度
     uint8_t  reserved;      // 保留

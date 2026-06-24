@@ -3,7 +3,7 @@
 #include <errno.h>
 
 #define RIP_HEADER_SIZE  4   // 头部：command(1) + version(1) + reserved(2)
-#define RIP_ENTRY_SIZE   24  // 每条路由 24 bytes
+#define RIP_ENTRY_SIZE   22  // 每条路由：af(2) + addr(16) + prefix_len(1) + reserved(1) + metric(2)
 
 int rip_send_response(int udp_fd, const struct sockaddr *dst,
                       socklen_t dst_len, route_table_t *rt,
@@ -40,7 +40,6 @@ int rip_send_response(int udp_fd, const struct sockaddr *dst,
 #endif
 
         entry->af = htons(e->af == AF_INET6 ? RIP_AFI_IPV6 : RIP_AFI_IPV4);
-        entry->tag = 0;
         addr_copy(e->af, e->dest, entry->addr);
         entry->prefix_len = (uint8_t)e->prefix_len;
         entry->reserved = 0;

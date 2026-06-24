@@ -18,7 +18,7 @@
 #define RIP_NEIGHBOR_SEC   180  // 邻居失效超时（秒）
 #define RIP_AFI_IPV4        2   // RIP 线格式 IPv4 地址族
 #define RIP_AFI_IPV6       10   // RIP 线格式 IPv6 地址族
-#define RIP_MSG_MAX        604  // 最大 RIP 报文字节数（4 + 25×24）
+#define RIP_MSG_MAX        554  // 最大 RIP 报文字节数（4 + 25×22）
 
 //  日志
 void log_printf(const char *fmt, ...);
