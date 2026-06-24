@@ -30,13 +30,13 @@ clean:
 
 # Convenience targets for running router instances
 run1: $(TARGET)
-	./$(TARGET) config/router1.cfg
+	./$(TARGET) config/r1.cfg
 
 run2: $(TARGET)
-	./$(TARGET) config/router2.cfg
+	./$(TARGET) config/r2.cfg
 
 run3: $(TARGET)
-	./$(TARGET) config/router3.cfg
+	./$(TARGET) config/r3.cfg
 
 # Help
 help:
@@ -57,4 +57,4 @@ help:
 	@echo "  telnet 127.0.0.1 8023   Connect to router 3"
 	@echo ""
 	@echo "Debug:"
-	@echo "  ./ripd config/router1.cfg 2>rip.log"
+	@echo "  ./ripd config/r1.cfg 2>rip.log"

@@ -28,7 +28,7 @@
 | 邻居地址可以是 IP（127.0.0.1）或主机名（router2.local） | `src/config.c` → `resolve_addr()`, 先用 `AI_NUMERICHOST` 试，失败则用主机名解析 |
 | 使用 `getaddrinfo` 统一解析地址 | `src/config.c` → `resolve_addr()`, 调用 `getaddrinfo()` |
 | 创建 UDP 套接字，绑定端口，启用 `SO_REUSEADDR` | `src/router.c` → `router_bind()`, `setsockopt(..., SO_REUSEADDR, ...)` |
-| 配置文件示例 | `config/router1.cfg`, `config/router2.cfg`, `config/router3.cfg` |
+| 配置文件示例 | `config/r1.cfg`, `config/r2.cfg`, `config/r3.cfg` |
 
 ### 2.2.2 功能 2：路由表维护
 
@@ -106,7 +106,7 @@
 
 | 测试要求 | 验证命令 |
 |----------|----------|
-| 3.1 测试环境：3 路由器网状拓扑 | 在 3 个终端分别启动：`./ripd config/router1.cfg` / `router2.cfg` / `router3.cfg` |
+| 3.1 测试环境：3 路由器网状拓扑 | 在 3 个终端分别启动：`./ripd config/r1.cfg` / `r2.cfg` / `r3.cfg` |
 | 3.2 基本功能测试 & 路由收敛验证 | `nc 127.0.0.1 8021` → `show route`，应看到全部 3 条路由 |
 | 3.3 毒性反转测试 | `nc 127.0.0.1 8021` → `link down 2` → `show route`，10.0.2.0/24 变 metric=16 [GC] |
 | 3.4 邻居失效自动检测（180s 超时） | 直接关闭路由器 2 进程，等待 180 秒后路由器 1 的 `show neighbors` 显示 R2 状态为 DOWN |
